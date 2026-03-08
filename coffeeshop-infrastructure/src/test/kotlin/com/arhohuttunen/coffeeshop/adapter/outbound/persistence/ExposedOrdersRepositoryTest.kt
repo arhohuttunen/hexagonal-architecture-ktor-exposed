@@ -42,7 +42,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
             )
         )
 
-        val persistedOrder = ExposedOrdersRepository.save(order)
+        val persistedOrder = ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
 
         persistedOrder.location shouldBe Location.TAKE_AWAY
         persistedOrder.items shouldContainExactly listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
@@ -58,7 +58,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
             )
         )
 
-        val order = ExposedOrdersRepository.findById(orderId)
+        val order = ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
 
         order.location shouldBe Location.IN_STORE
         order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
@@ -66,22 +66,22 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a non-existing order throws an exception") {
         shouldThrow<OrderNotFound> {
-            ExposedOrdersRepository.findById(Uuid.random())
+            ExposedTransactionScope.execute { ExposedOrdersRepository.findById(Uuid.random()) }
         }
     }
 
     test("deleting an order removes it") {
         val orderId = havingPersisted(anOrder())
 
-        ExposedOrdersRepository.deleteById(orderId)
+        ExposedTransactionScope.execute { ExposedOrdersRepository.deleteById(orderId) }
 
         shouldThrow<OrderNotFound> {
-            ExposedOrdersRepository.findById(orderId)
+            ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
         }
     }
 })
 
 fun havingPersisted(order: Order): Uuid {
-    ExposedOrdersRepository.save(order)
+    ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
     return order.id
 }

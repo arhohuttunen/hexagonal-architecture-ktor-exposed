@@ -9,50 +9,44 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.upsert
 import kotlin.uuid.Uuid
 
 object ExposedOrdersRepository : Orders {
     override fun save(order: Order): Order {
-        transaction {
-            OrdersTable.upsert {
-                it[OrdersTable.id] = order.id
-                it[OrdersTable.location] = order.location
-                it[OrdersTable.status] = order.status
-            }
-
-            OrderItemsTable.deleteWhere { OrderItemsTable.orderId eq order.id }
-            OrderItemsTable.batchInsert(order.items) { item ->
-                this[OrderItemsTable.orderId] = order.id
-                this[OrderItemsTable.drink] = item.drink
-                this[OrderItemsTable.milk] = item.milk
-                this[OrderItemsTable.size] = item.size
-                this[OrderItemsTable.quantity] = item.quantity
-            }
+        OrdersTable.upsert {
+            it[OrdersTable.id] = order.id
+            it[OrdersTable.location] = order.location
+            it[OrdersTable.status] = order.status
         }
+
+        OrderItemsTable.deleteWhere { OrderItemsTable.orderId eq order.id }
+        OrderItemsTable.batchInsert(order.items) { item ->
+            this[OrderItemsTable.orderId] = order.id
+            this[OrderItemsTable.drink] = item.drink
+            this[OrderItemsTable.milk] = item.milk
+            this[OrderItemsTable.size] = item.size
+            this[OrderItemsTable.quantity] = item.quantity
+        }
+
         return order
     }
 
     override fun findById(orderId: Uuid): Order {
-        return transaction {
-            val orderRow = OrdersTable.selectAll()
-                .where { OrdersTable.id eq orderId }
-                .singleOrNull() ?: throw OrderNotFound()
+        val orderRow = OrdersTable.selectAll()
+            .where { OrdersTable.id eq orderId }
+            .singleOrNull() ?: throw OrderNotFound()
 
-            val items = OrderItemsTable.selectAll()
-                .where { OrderItemsTable.orderId eq orderId }
-                .map { it.toLineItem() }
+        val items = OrderItemsTable.selectAll()
+            .where { OrderItemsTable.orderId eq orderId }
+            .map { it.toLineItem() }
 
-            orderRow.toOrder(items)
-        }
+        return orderRow.toOrder(items)
     }
 
     override fun deleteById(orderId: Uuid) {
-        transaction {
-            OrderItemsTable.deleteWhere { this.orderId eq orderId }
-            OrdersTable.deleteWhere { id eq orderId }
-        }
+        OrderItemsTable.deleteWhere { this.orderId eq orderId }
+        OrdersTable.deleteWhere { id eq orderId }
     }
 }
 

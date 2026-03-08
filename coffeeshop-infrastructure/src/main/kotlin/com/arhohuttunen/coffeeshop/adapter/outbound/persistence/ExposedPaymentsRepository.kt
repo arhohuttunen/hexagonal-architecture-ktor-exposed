@@ -8,41 +8,36 @@ import kotlinx.datetime.YearMonth
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.upsert
 import kotlin.uuid.Uuid
 
 object ExposedPaymentsRepository : Payments {
     override fun save(payment: Payment): Payment {
-        transaction {
-            PaymentsTable.upsert {
-                it[PaymentsTable.orderId] = payment.orderId
-                it[PaymentsTable.cardHolderName] = payment.creditCard.cardHolderName
-                it[PaymentsTable.cardNumber] = payment.creditCard.cardNumber
-                it[PaymentsTable.cardExpiry] = payment.creditCard.expiry.toString()
-                it[PaymentsTable.paidAt] = payment.paidAt
-            }
+        PaymentsTable.upsert {
+            it[PaymentsTable.orderId] = payment.orderId
+            it[PaymentsTable.cardHolderName] = payment.creditCard.cardHolderName
+            it[PaymentsTable.cardNumber] = payment.creditCard.cardNumber
+            it[PaymentsTable.cardExpiry] = payment.creditCard.expiry.toString()
+            it[PaymentsTable.paidAt] = payment.paidAt
         }
         return payment
     }
 
     override fun findByOrderId(orderId: Uuid): Payment {
-        return transaction {
-            val paymentRow = PaymentsTable.selectAll()
-                .where { PaymentsTable.orderId eq orderId }
-                .singleOrNull() ?: throw PaymentNotFound()
+        val paymentRow = PaymentsTable.selectAll()
+            .where { PaymentsTable.orderId eq orderId }
+            .singleOrNull() ?: throw PaymentNotFound()
 
-            paymentRow.toPayment()
-        }
+        return paymentRow.toPayment()
     }
 }
 
 private fun ResultRow.toPayment() = Payment(
-        orderId = this[PaymentsTable.orderId],
-        creditCard = CreditCard(
-            this[PaymentsTable.cardHolderName],
-            this[PaymentsTable.cardNumber],
-            YearMonth.parse(this[PaymentsTable.cardExpiry])
-        ),
-        paidAt = this[PaymentsTable.paidAt]
-    )
+    orderId = this[PaymentsTable.orderId],
+    creditCard = CreditCard(
+        this[PaymentsTable.cardHolderName],
+        this[PaymentsTable.cardNumber],
+        YearMonth.parse(this[PaymentsTable.cardExpiry])
+    ),
+    paidAt = this[PaymentsTable.paidAt]
+)

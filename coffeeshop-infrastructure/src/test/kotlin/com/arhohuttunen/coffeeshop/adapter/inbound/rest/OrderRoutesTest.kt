@@ -6,8 +6,8 @@ import com.arhohuttunen.coffeeshop.application.CoffeeMachine
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.*
