@@ -3,7 +3,7 @@ package com.arhohuttunen.coffeeshop
 import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerProjectExtension
-import io.kotest.matchers.shouldBe
+import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.config.*
@@ -75,7 +75,7 @@ suspend fun ApplicationTestBuilder.placeOrder(): Uuid {
         setBody(orderJson)
     }
 
-    result.status shouldBe HttpStatusCode.Created
+    result shouldHaveStatus HttpStatusCode.Created
 
     val location = result.headers[HttpHeaders.Location]!!
     return Uuid.parse(location.substring(location.lastIndexOf("/") + 1))
@@ -86,12 +86,12 @@ suspend fun ApplicationTestBuilder.updateOrder(orderId: Uuid) {
         contentType(ContentType.Application.Json)
         setBody(orderJson)
     }
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
 
 suspend fun ApplicationTestBuilder.cancelOrder(orderId: Uuid) {
     val result = client.delete("/orders/$orderId")
-    result.status shouldBe HttpStatusCode.NoContent
+    result shouldHaveStatus HttpStatusCode.NoContent
 }
 
 suspend fun ApplicationTestBuilder.payOrder(orderId: Uuid) {
@@ -107,25 +107,25 @@ suspend fun ApplicationTestBuilder.payOrder(orderId: Uuid) {
         """.trimIndent()
         )
     }
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
 
 suspend fun ApplicationTestBuilder.prepareOrder(orderId: Uuid) {
     val result = client.put("/orders/$orderId/preparation")
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
 
 suspend fun ApplicationTestBuilder.finishPreparingOrder(orderId: Uuid) {
     val result = client.delete("/orders/$orderId/preparation")
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
 
 suspend fun ApplicationTestBuilder.readReceipt(orderId: Uuid) {
     val result = client.get("/receipts/$orderId")
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
 
 suspend fun ApplicationTestBuilder.takeOrder(orderId: Uuid) {
     val result = client.delete("/receipts/$orderId")
-    result.status shouldBe HttpStatusCode.OK
+    result shouldHaveStatus HttpStatusCode.OK
 }
