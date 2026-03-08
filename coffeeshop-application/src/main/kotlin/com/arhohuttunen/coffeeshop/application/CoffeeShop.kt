@@ -23,13 +23,16 @@ class CoffeeShop(
     private val transactionScope: TransactionScope = TransactionScope()
 ) : OrderingCoffee {
     override fun placeOrder(location: Location, items: List<LineItem>): Order =
-        transactionScope.execute { orders.save(Order(location = location, items = items)) }
+        transactionScope.execute {
+            orders.save(Order.Placed(location = location, items = items))
+        }
 
     override fun updateOrder(orderId: Uuid, location: Location, items: List<LineItem>): Either<OrderError, Order> =
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                order.update(location, items).bind().also { orders.save(it) }
+                ensure(order is Order.Placed) { OrderError.AlreadyPaid }
+                orders.save(order.update(location, items))
             }
         }
 
@@ -37,7 +40,7 @@ class CoffeeShop(
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                ensure(order.canBeCancelled()) { OrderError.AlreadyPaid }
+                ensure(order is Order.Placed) { OrderError.AlreadyPaid }
                 orders.deleteById(orderId)
             }
         }
@@ -46,8 +49,8 @@ class CoffeeShop(
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                val paidOrder = order.markPaid().bind()
-                orders.save(paidOrder)
+                ensure(order is Order.Placed) { OrderError.AlreadyPaid }
+                orders.save(order.pay())
                 payments.save(Payment(orderId, creditCard, Clock.System.now()))
             }
         }
@@ -65,7 +68,8 @@ class CoffeeShop(
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                order.markTaken().bind().also { orders.save(it) }
+                ensure(order is Order.Ready) { OrderError.NotReady }
+                orders.save(order.take())
             }
         }
 }

@@ -7,6 +7,7 @@ import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
+import com.arhohuttunen.coffeeshop.domain.Status
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -17,10 +18,18 @@ import kotlin.uuid.Uuid
 
 object ExposedOrdersRepository : Orders {
     override fun save(order: Order): Order {
+        val status = when (order) {
+            is Order.Placed -> Status.PAYMENT_EXPECTED
+            is Order.Paid -> Status.PAID
+            is Order.InPreparation -> Status.PREPARING
+            is Order.Ready -> Status.READY
+            is Order.Taken -> Status.TAKEN
+        }
+
         OrdersTable.upsert {
             it[OrdersTable.id] = order.id
             it[OrdersTable.location] = order.location
-            it[OrdersTable.status] = order.status
+            it[OrdersTable.status] = status
         }
 
         OrderItemsTable.deleteWhere { OrderItemsTable.orderId eq order.id }
@@ -60,9 +69,14 @@ private fun ResultRow.toLineItem() = LineItem(
     quantity = this[OrderItemsTable.quantity],
 )
 
-private fun ResultRow.toOrder(items: List<LineItem>) = Order(
-    id = this[OrdersTable.id],
-    location = this[OrdersTable.location],
-    items = items,
-    status = this[OrdersTable.status]
-)
+private fun ResultRow.toOrder(items: List<LineItem>): Order {
+    val id = this[OrdersTable.id]
+    val location = this[OrdersTable.location]
+    return when (this[OrdersTable.status]) {
+        Status.PAYMENT_EXPECTED -> Order.Placed(id, location, items)
+        Status.PAID -> Order.Paid(id, location, items)
+        Status.PREPARING -> Order.InPreparation(id, location, items)
+        Status.READY -> Order.Ready(id, location, items)
+        Status.TAKEN -> Order.Taken(id, location, items)
+    }
+}

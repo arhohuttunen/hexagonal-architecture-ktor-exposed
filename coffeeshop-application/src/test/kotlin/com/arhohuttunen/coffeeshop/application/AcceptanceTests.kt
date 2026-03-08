@@ -11,6 +11,7 @@ import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
+import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
@@ -18,12 +19,12 @@ import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import com.arhohuttunen.coffeeshop.domain.Size
-import com.arhohuttunen.coffeeshop.domain.Status
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.kotest.assertions.arrow.core.shouldBeLeft
-import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.types.shouldBeInstanceOf
 
 class AcceptanceTests : FunSpec({
     val orders: Orders = InMemoryOrders()
@@ -38,7 +39,7 @@ class AcceptanceTests : FunSpec({
 
         order.location shouldBe Location.IN_STORE
         order.items shouldContainExactly listOf(LineItem(Drink.CAPPUCCINO, Milk.SKIMMED, Size.SMALL, 1))
-        order.status shouldBe Status.PAYMENT_EXPECTED
+        order.shouldBeInstanceOf<Order.Placed>()
     }
 
     test("customer can update the order before paying") {
@@ -78,7 +79,7 @@ class AcceptanceTests : FunSpec({
 
         payment.orderId shouldBe order.id
         payment.creditCard shouldBe creditCard
-        orders.findById(order.id).shouldBeRight().status shouldBe Status.PAID
+        orders.findById(order.id).shouldBeRight().shouldBeInstanceOf<Order.Paid>()
     }
 
     test("customer can get a receipt when the order is paid") {
@@ -94,18 +95,18 @@ class AcceptanceTests : FunSpec({
     test("barista can start preparing the order when it is paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        barista.startPreparingOrder(existingOrder.id).shouldBeRight().status shouldBe Status.PREPARING
+        barista.startPreparingOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.InPreparation>()
     }
 
     test("barista can mark the order ready when they have finished preparing it") {
         val existingOrder = orders.save(anOrderInPreparation())
 
-        barista.finishPreparingOrder(existingOrder.id).shouldBeRight().status shouldBe Status.READY
+        barista.finishPreparingOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.Ready>()
     }
 
     test("customer can take the order when it is ready") {
         val existingOrder = orders.save(aReadyOrder())
 
-        customer.takeOrder(existingOrder.id).shouldBeRight().status shouldBe Status.TAKEN
+        customer.takeOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.Taken>()
     }
 })

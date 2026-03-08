@@ -1,8 +1,5 @@
 package com.arhohuttunen.coffeeshop.domain
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
 import java.math.BigDecimal
 import kotlin.uuid.Uuid
 
@@ -50,33 +47,49 @@ enum class Status {
     TAKEN
 }
 
-data class Order(
-    val id: Uuid = Uuid.random(),
-    val location: Location,
-    val items: List<LineItem>,
-    val status: Status = Status.PAYMENT_EXPECTED
-) {
-    fun canBeCancelled() = status == Status.PAYMENT_EXPECTED
+sealed class Order {
+    abstract val id: Uuid
+    abstract val location: Location
+    abstract val items: List<LineItem>
 
     fun cost() = items.map(LineItem::cost).reduce(BigDecimal::add)
 
-    fun update(location: Location, items: List<LineItem>): Either<OrderError, Order> =
-        if (status == Status.PAID) OrderError.AlreadyPaid.left()
-        else copy(location = location, items = items).right()
+    data class Placed(
+        override val id: Uuid = Uuid.random(),
+        override val location: Location,
+        override val items: List<LineItem>
+    ) : Order() {
+        fun update(location: Location, items: List<LineItem>): Placed = copy(location = location, items = items)
+        fun pay(): Paid = Paid(id, location, items)
+    }
 
-    fun markPaid(): Either<OrderError, Order> =
-        if (status != Status.PAYMENT_EXPECTED) OrderError.AlreadyPaid.left()
-        else copy(status = Status.PAID).right()
+    data class Paid(
+        override val id: Uuid,
+        override val location: Location,
+        override val items: List<LineItem>
+    ) : Order() {
+        fun startPreparing(): InPreparation = InPreparation(id, location, items)
+    }
 
-    fun markBeingPrepared(): Either<OrderError, Order> =
-        if (status != Status.PAID) OrderError.NotPaid.left()
-        else copy(status = Status.PREPARING).right()
+    data class InPreparation(
+        override val id: Uuid,
+        override val location: Location,
+        override val items: List<LineItem>
+    ) : Order() {
+        fun finishPreparing(): Ready = Ready(id, location, items)
+    }
 
-    fun markPrepared(): Either<OrderError, Order> =
-        if (status != Status.PREPARING) OrderError.NotBeingPrepared.left()
-        else copy(status = Status.READY).right()
+    data class Ready(
+        override val id: Uuid,
+        override val location: Location,
+        override val items: List<LineItem>
+    ) : Order() {
+        fun take(): Taken = Taken(id, location, items)
+    }
 
-    fun markTaken(): Either<OrderError, Order> =
-        if (status != Status.READY) OrderError.NotReady.left()
-        else copy(status = Status.TAKEN).right()
+    data class Taken(
+        override val id: Uuid,
+        override val location: Location,
+        override val items: List<LineItem>
+    ) : Order()
 }

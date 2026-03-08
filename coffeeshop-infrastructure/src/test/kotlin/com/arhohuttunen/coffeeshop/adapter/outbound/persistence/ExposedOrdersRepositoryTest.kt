@@ -36,7 +36,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 
     test("creating an order returns the persisted order") {
-        val order = Order(
+        val order = Order.Placed(
             location = Location.TAKE_AWAY,
             items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
         )
@@ -49,7 +49,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a placed order returns its details") {
         val orderId = havingPersisted(
-            Order(
+            Order.Placed(
                 location = Location.IN_STORE,
                 items = listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
             )

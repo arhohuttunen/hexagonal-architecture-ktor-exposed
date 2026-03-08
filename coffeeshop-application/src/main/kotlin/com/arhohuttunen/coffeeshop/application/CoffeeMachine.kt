@@ -2,6 +2,7 @@ package com.arhohuttunen.coffeeshop.application
 
 import arrow.core.Either
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.arhohuttunen.coffeeshop.application.ports.inbound.PreparingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.application.ports.outbound.TransactionScope
@@ -17,7 +18,8 @@ class CoffeeMachine(
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                order.markBeingPrepared().bind().also { orders.save(it) }
+                ensure(order is Order.Paid) { OrderError.NotPaid }
+                orders.save(order.startPreparing())
             }
         }
 
@@ -25,7 +27,8 @@ class CoffeeMachine(
         transactionScope.execute {
             either {
                 val order = orders.findById(orderId).bind()
-                order.markPrepared().bind().also { orders.save(it) }
+                ensure(order is Order.InPreparation) { OrderError.NotBeingPrepared }
+                orders.save(order.finishPreparing())
             }
         }
 }
