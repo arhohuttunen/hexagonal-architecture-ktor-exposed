@@ -1,6 +1,7 @@
 package com.arhohuttunen.coffeeshop
 
 import com.arhohuttunen.coffeeshop.adapter.inbound.rest.orderRoutes
+import com.arhohuttunen.coffeeshop.adapter.inbound.rest.paymentRoutes
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -12,5 +13,6 @@ fun Application.configureRouting(dependencies: Dependencies) {
     }
     routing {
         orderRoutes(dependencies.orderingCoffee)
+        paymentRoutes(dependencies.orderingCoffee)
     }
 }

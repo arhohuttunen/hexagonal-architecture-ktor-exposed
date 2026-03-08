@@ -12,6 +12,7 @@ application {
 
 dependencies {
     implementation(project(":coffeeshop-application"))
+    implementation(libs.bundles.kotlinxEcosystem)
     implementation(libs.ktorSerializationKotlinxJson)
     implementation(libs.ktorServerConfigYaml)
     implementation(libs.ktorServerContentNegotiation)
