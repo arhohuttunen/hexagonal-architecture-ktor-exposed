@@ -71,7 +71,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a non-existing order returns NotFound") {
         transaction {
-            ExposedOrdersRepository.findById(Uuid.random()).shouldBeLeft() shouldBe OrderError.NotFound
+            val result = ExposedOrdersRepository.findById(Uuid.random())
+
+            result.shouldBeLeft() shouldBe OrderError.NotFound
         }
     }
 
@@ -81,7 +83,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
             ExposedOrdersRepository.deleteById(orderId)
 
-            ExposedOrdersRepository.findById(orderId).shouldBeLeft() shouldBe OrderError.NotFound
+            val result = ExposedOrdersRepository.findById(orderId)
+
+            result.shouldBeLeft() shouldBe OrderError.NotFound
         }
     }
 
@@ -89,7 +93,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
         transaction {
             val orderId = havingPersisted(aPaidOrder())
 
-            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Paid>()
+            val result = ExposedOrdersRepository.findById(orderId)
+
+            result.shouldBeRight().shouldBeInstanceOf<Order.Paid>()
         }
     }
 
@@ -97,7 +103,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
         transaction {
             val orderId = havingPersisted(anOrderInPreparation())
 
-            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.InPreparation>()
+            val result = ExposedOrdersRepository.findById(orderId)
+
+            result.shouldBeRight().shouldBeInstanceOf<Order.InPreparation>()
         }
     }
 
@@ -105,7 +113,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
         transaction {
             val orderId = havingPersisted(aReadyOrder())
 
-            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Ready>()
+            val result = ExposedOrdersRepository.findById(orderId)
+
+            result.shouldBeRight().shouldBeInstanceOf<Order.Ready>()
         }
     }
 
@@ -113,7 +123,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
         transaction {
             val orderId = havingPersisted(aReadyOrder().take())
 
-            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Taken>()
+            val result = ExposedOrdersRepository.findById(orderId)
+
+            result.shouldBeRight().shouldBeInstanceOf<Order.Taken>()
         }
     }
 })

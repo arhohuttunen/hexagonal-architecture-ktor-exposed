@@ -35,7 +35,7 @@ class OrderRoutesTest : FunSpec({
 
     test("returns order details when placing an order") {
         withOrderRoutes {
-            val body = post("/orders") {
+            val response = post("/orders") {
                 contentType(ContentType.Application.Json)
                 setBody("""
                     {
@@ -43,7 +43,9 @@ class OrderRoutesTest : FunSpec({
                         "items": [{"drink": "LATTE", "milk": "WHOLE", "size": "LARGE", "quantity": 1}]
                     }
                 """.trimIndent())
-            }.bodyAsText()
+            }
+
+            val body = response.bodyAsText()
 
             body.shouldContainJsonKeyValue("$.location", "IN_STORE")
             body.shouldContainJsonKeyValue("$.items[0].drink", "LATTE")

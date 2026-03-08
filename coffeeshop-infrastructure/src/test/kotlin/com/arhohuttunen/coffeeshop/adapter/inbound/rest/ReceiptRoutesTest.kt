@@ -42,7 +42,9 @@ class ReceiptRoutesTest : FunSpec({
             val order = orders.save(aReadyOrder { items(aLineItem { size = Size.LARGE }) })
             payments.save(aPaymentForOrder(order.id))
 
-            val body = get("/receipts/${order.id}").bodyAsText()
+            val response = get("/receipts/${order.id}")
+
+            val body = response.bodyAsText()
 
             body.shouldContainJsonKeyValue("$.amount", "5.00")
             body.shouldContainJsonKey("$.paidAt")

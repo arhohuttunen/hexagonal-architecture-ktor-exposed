@@ -46,7 +46,7 @@ class PaymentRoutesTest : FunSpec({
         withPaymentRoutes { orders ->
             val order = orders.save(anOrder())
 
-            val body = put("/payments/${order.id}") {
+            val response = put("/payments/${order.id}") {
                 contentType(ContentType.Application.Json)
                 setBody("""
                     {
@@ -55,7 +55,9 @@ class PaymentRoutesTest : FunSpec({
                         "expiry": "2023-12"
                     }
                 """.trimIndent())
-            }.bodyAsText()
+            }
+
+            val body = response.bodyAsText()
 
             body.shouldContainJsonKeyValue("$.cardHolderName", "Michael Faraday")
             body.shouldContainJsonKeyValue("$.cardNumber", "11223344")

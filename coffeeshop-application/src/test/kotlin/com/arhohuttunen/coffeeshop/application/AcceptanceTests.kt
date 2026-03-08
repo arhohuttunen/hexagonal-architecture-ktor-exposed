@@ -44,13 +44,17 @@ class AcceptanceTests : FunSpec({
         val twoItems = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 2))
         val order = customer.placeOrder(location = Location.TAKE_AWAY, items = oneItem)
 
-        customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight().items shouldContainExactly twoItems
+        val updatedOrder = customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight()
+
+        updatedOrder.items shouldContainExactly twoItems
     }
 
     test("order cannot be updated if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft() shouldBe OrderError.AlreadyPaid
+        val result = customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList())
+
+        result.shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can cancel the order before paying") {
@@ -64,7 +68,9 @@ class AcceptanceTests : FunSpec({
     test("an order cannot be cancelled if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        customer.cancelOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.AlreadyPaid
+        val result = customer.cancelOrder(existingOrder.id)
+
+        result.shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can pay the order") {
@@ -90,7 +96,9 @@ class AcceptanceTests : FunSpec({
     test("customer cannot get a receipt when payment is missing") {
         val existingOrder = orders.save(aPaidOrder())
 
-        customer.readReceipt(existingOrder.id).shouldBeLeft() shouldBe OrderError.PaymentNotFound
+        val result = customer.readReceipt(existingOrder.id)
+
+        result.shouldBeLeft() shouldBe OrderError.PaymentNotFound
     }
 
     test("barista can start preparing the order when it is paid") {
@@ -102,7 +110,9 @@ class AcceptanceTests : FunSpec({
     test("barista cannot start preparing an order that has not been paid") {
         val existingOrder = orders.save(anOrder())
 
-        barista.startPreparingOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotPaid
+        val result = barista.startPreparingOrder(existingOrder.id)
+
+        result.shouldBeLeft() shouldBe OrderError.NotPaid
     }
 
     test("barista can mark the order ready when they have finished preparing it") {
@@ -114,7 +124,9 @@ class AcceptanceTests : FunSpec({
     test("barista cannot finish preparing an order that is not being prepared") {
         val existingOrder = orders.save(aPaidOrder())
 
-        barista.finishPreparingOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotBeingPrepared
+        val result = barista.finishPreparingOrder(existingOrder.id)
+
+        result.shouldBeLeft() shouldBe OrderError.NotBeingPrepared
     }
 
     test("customer can take the order when it is ready") {
@@ -126,6 +138,8 @@ class AcceptanceTests : FunSpec({
     test("customer cannot take an order that is not ready") {
         val existingOrder = orders.save(anOrderInPreparation())
 
-        customer.takeOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotReady
+        val result = customer.takeOrder(existingOrder.id)
+
+        result.shouldBeLeft() shouldBe OrderError.NotReady
     }
 })
