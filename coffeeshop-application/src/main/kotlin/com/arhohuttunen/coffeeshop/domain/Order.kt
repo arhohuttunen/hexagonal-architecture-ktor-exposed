@@ -46,6 +46,10 @@ data class Order(
     val status: Status = Status.PAYMENT_EXPECTED
 ) {
     fun update(location: Location, items: List<LineItem>) = copy(location = location, items = items)
+
+    fun canBeCancelled() = status == Status.PAYMENT_EXPECTED
+
+    fun markPaid() = copy(status = Status.PAID)
 }
 
 

@@ -8,4 +8,7 @@ object OrderTestFactory {
                 LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 1)
             )
         )
+
+    fun aPaidOrder() =
+        anOrder().markPaid()
 }

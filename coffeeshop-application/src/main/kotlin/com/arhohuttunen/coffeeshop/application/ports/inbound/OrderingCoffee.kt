@@ -8,4 +8,5 @@ import kotlin.uuid.Uuid
 interface OrderingCoffee {
     fun placeOrder(location: Location, items: List<LineItem>): Order
     fun updateOrder(orderId: Uuid, location: Location, items: List<LineItem>): Order
+    fun cancelOrder(orderId: Uuid)
 }

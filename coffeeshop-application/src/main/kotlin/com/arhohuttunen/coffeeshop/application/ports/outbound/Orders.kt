@@ -6,4 +6,5 @@ import kotlin.uuid.Uuid
 interface Orders {
     fun save(order: Order): Order
     fun findById(orderId: Uuid): Order
+    fun deleteById(orderId: Uuid)
 }

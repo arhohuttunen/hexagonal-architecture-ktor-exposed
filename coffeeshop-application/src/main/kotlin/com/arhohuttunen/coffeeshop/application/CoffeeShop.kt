@@ -24,4 +24,12 @@ class CoffeeShop(private val orders: Orders) : OrderingCoffee {
 
         return orders.save(existingOrder.update(location, items))
     }
+
+    override fun cancelOrder(orderId: Uuid) {
+        val order = orders.findById(orderId)
+
+        if (!order.canBeCancelled()) throw IllegalStateException("Order is already paid")
+
+        orders.deleteById(orderId)
+    }
 }

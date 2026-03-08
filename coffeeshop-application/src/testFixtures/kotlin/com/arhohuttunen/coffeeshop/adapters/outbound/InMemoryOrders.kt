@@ -14,4 +14,8 @@ class InMemoryOrders : Orders {
     }
 
     override fun findById(orderId: Uuid): Order = orders[orderId] ?: throw OrderNotFound()
+
+    override fun deleteById(orderId: Uuid) {
+        orders.remove(orderId) ?: throw OrderNotFound()
+    }
 }
