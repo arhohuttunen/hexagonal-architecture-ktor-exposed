@@ -99,29 +99,29 @@ fun Route.orderRoutes(orderingCoffee: OrderingCoffee, preparingCoffee: Preparing
         val request = call.receive<OrderRequest>()
         orderingCoffee.updateOrder(resource.id, request.location, request.domainItems())
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { order -> call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order)) }
             )
     }
     delete<Orders.ById> { resource ->
         orderingCoffee.cancelOrder(resource.id)
             .fold(
-                { call.respondError(it) },
+                { error -> call.respondError(error) },
                 { call.respond(HttpStatusCode.NoContent) }
             )
     }
     put<Orders.ById.Preparation> { resource ->
         preparingCoffee.startPreparingOrder(resource.parent.id)
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { order -> call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order)) }
             )
     }
     delete<Orders.ById.Preparation> { resource ->
         preparingCoffee.finishPreparingOrder(resource.parent.id)
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { order -> call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order)) }
             )
     }
 }

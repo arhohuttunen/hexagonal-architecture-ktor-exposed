@@ -59,8 +59,8 @@ fun Route.paymentRoutes(orderingCoffee: OrderingCoffee) {
         val request = call.receive<PaymentRequest>()
         orderingCoffee.payOrder(resource.id, request.creditCard())
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, PaymentResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { payment -> call.respond(HttpStatusCode.OK, PaymentResponse.fromDomain(payment)) }
             )
     }
 }

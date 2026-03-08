@@ -40,15 +40,15 @@ fun Route.receiptRoutes(orderingCoffee: OrderingCoffee) {
     get<Receipts.ById> { resource ->
         orderingCoffee.readReceipt(resource.id)
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, ReceiptResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { receipt -> call.respond(HttpStatusCode.OK, ReceiptResponse.fromDomain(receipt)) }
             )
     }
     delete<Receipts.ById> { resource ->
         orderingCoffee.takeOrder(resource.id)
             .fold(
-                { call.respondError(it) },
-                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+                { error -> call.respondError(error) },
+                { order -> call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order)) }
             )
     }
 }
