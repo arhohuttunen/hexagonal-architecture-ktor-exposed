@@ -1,5 +1,6 @@
 package com.arhohuttunen.coffeeshop.adapters.outbound
 
+import com.arhohuttunen.coffeeshop.application.ports.outbound.PaymentNotFound
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
 import com.arhohuttunen.coffeeshop.domain.Payment
 import kotlin.uuid.Uuid
@@ -11,4 +12,6 @@ class InMemoryPayments : Payments {
         payments[payment.orderId] = payment
         return payment
     }
+
+    override fun findByOrderId(orderId: Uuid): Payment = payments[orderId] ?: throw PaymentNotFound()
 }

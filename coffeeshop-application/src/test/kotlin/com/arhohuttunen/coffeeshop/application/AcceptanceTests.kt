@@ -13,6 +13,7 @@ import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import com.arhohuttunen.coffeeshop.domain.Size
 import com.arhohuttunen.coffeeshop.domain.Status
 import io.kotest.assertions.throwables.shouldThrow
@@ -80,5 +81,15 @@ class AcceptanceTests : FunSpec({
         payment.orderId shouldBe order.id
         payment.creditCard shouldBe creditCard
         orders.findById(order.id).status shouldBe Status.PAID
+    }
+
+    test("customer can get a receipt when the order is paid") {
+        val existingOrder = orders.save(aPaidOrder())
+        val existingPayment = payments.save(aPaymentForOrder(existingOrder.id))
+
+        val receipt = customer.readReceipt(existingOrder.id)
+
+        receipt.amount shouldBe existingOrder.cost()
+        receipt.paidAt shouldBe existingPayment.paidAt
     }
 })

@@ -8,6 +8,7 @@ import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.Payment
+import com.arhohuttunen.coffeeshop.domain.Receipt
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -46,5 +47,12 @@ class CoffeeShop(private val orders: Orders, private val payments: Payments) : O
         orders.save(order.markPaid())
 
         return payments.save(Payment(orderId, creditCard, Clock.System.now()))
+    }
+
+    override fun readReceipt(orderId: Uuid): Receipt {
+        val order = orders.findById(orderId)
+        val payment = payments.findByOrderId(orderId)
+
+        return Receipt(order.cost(), payment.paidAt)
     }
 }
