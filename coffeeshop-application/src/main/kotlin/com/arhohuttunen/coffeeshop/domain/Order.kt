@@ -44,6 +44,8 @@ data class Order(
     val location: Location,
     val items: List<LineItem>,
     val status: Status = Status.PAYMENT_EXPECTED
-)
+) {
+    fun update(location: Location, items: List<LineItem>) = copy(location = location, items = items)
+}
 
 

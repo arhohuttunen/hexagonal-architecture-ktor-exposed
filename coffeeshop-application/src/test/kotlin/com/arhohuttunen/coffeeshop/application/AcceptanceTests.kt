@@ -26,4 +26,14 @@ class AcceptanceTests : FunSpec({
         order.items shouldContainExactly listOf(LineItem(Drink.CAPPUCCINO, Milk.SKIMMED, Size.SMALL, 1))
         order.status shouldBe Status.PAYMENT_EXPECTED
     }
+
+    test("customer can update the order before paying") {
+        val oneItem = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 1))
+        val twoItems = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 2))
+
+        val order = customer.placeOrder(location = Location.TAKE_AWAY, items = oneItem)
+        val updatedOrder = customer.updateOrder(order.id, Location.IN_STORE, twoItems)
+
+        updatedOrder.items shouldContainExactly twoItems
+    }
 })

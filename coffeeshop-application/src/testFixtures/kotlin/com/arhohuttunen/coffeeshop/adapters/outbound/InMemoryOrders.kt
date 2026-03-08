@@ -1,5 +1,6 @@
 package com.arhohuttunen.coffeeshop.adapters.outbound
 
+import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.Order
 import kotlin.uuid.Uuid
@@ -11,4 +12,6 @@ class InMemoryOrders : Orders {
         orders[order.id] = order
         return order
     }
+
+    override fun findById(orderId: Uuid): Order = orders[orderId] ?: throw OrderNotFound()
 }
