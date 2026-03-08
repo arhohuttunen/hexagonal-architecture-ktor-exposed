@@ -1,6 +1,7 @@
 package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
+import com.arhohuttunen.coffeeshop.application.ports.inbound.PreparingCoffee
 import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
@@ -73,7 +74,7 @@ data class OrderResponse(
     }
 }
 
-fun Route.orderRoutes(orderingCoffee: OrderingCoffee) {
+fun Route.orderRoutes(orderingCoffee: OrderingCoffee, preparingCoffee: PreparingCoffee) {
     post("/orders") {
         val request = call.receive<OrderRequest>()
         val order = orderingCoffee.placeOrder(request.location, request.domainItems())
@@ -88,5 +89,13 @@ fun Route.orderRoutes(orderingCoffee: OrderingCoffee) {
     delete("/orders/{id}") {
         orderingCoffee.cancelOrder(Uuid.parse(call.parameters["id"]!!))
         call.respond(HttpStatusCode.NoContent)
+    }
+    put("/orders/{id}/preparation") {
+        val order = preparingCoffee.startPreparingOrder(Uuid.parse(call.parameters["id"]!!))
+        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
+    }
+    delete("/orders/{id}/preparation") {
+        val order = preparingCoffee.finishPreparingOrder(Uuid.parse(call.parameters["id"]!!))
+        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
     }
 }

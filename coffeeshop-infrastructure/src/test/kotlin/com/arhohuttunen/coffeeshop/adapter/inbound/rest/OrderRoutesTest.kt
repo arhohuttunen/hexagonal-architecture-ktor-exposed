@@ -2,8 +2,11 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
+import com.arhohuttunen.coffeeshop.application.CoffeeMachine
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
@@ -61,19 +64,40 @@ class OrderRoutesTest : FunSpec({
             response shouldHaveStatus HttpStatusCode.NoContent
         }
     }
+
+    test("prepare an order") {
+        withOrderRoutes { orders ->
+            val order = orders.save(aPaidOrder())
+
+            val response = put("/orders/${order.id}/preparation")
+
+            response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
+
+    test("finish preparing an order") {
+        withOrderRoutes { orders ->
+            val order = orders.save(anOrderInPreparation())
+
+            val response = delete("/orders/${order.id}/preparation")
+
+            response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
 })
 
 fun withOrderRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
     val orders = InMemoryOrders()
     val payments = InMemoryPayments()
     val orderingCoffee = CoffeeShop(orders, payments)
+    val preparingCoffee = CoffeeMachine(orders)
 
     testApplication {
         install(ContentNegotiation) {
             json()
         }
         routing {
-            orderRoutes(orderingCoffee)
+            orderRoutes(orderingCoffee, preparingCoffee)
         }
         createClient {
             install(ClientContentNegotiation)

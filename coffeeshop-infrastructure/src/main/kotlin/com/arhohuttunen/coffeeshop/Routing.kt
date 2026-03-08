@@ -13,7 +13,7 @@ fun Application.configureRouting(dependencies: Dependencies) {
         json()
     }
     routing {
-        orderRoutes(dependencies.orderingCoffee)
+        orderRoutes(dependencies.orderingCoffee, dependencies.preparingCoffee)
         paymentRoutes(dependencies.orderingCoffee)
         receiptRoutes(dependencies.orderingCoffee)
     }
