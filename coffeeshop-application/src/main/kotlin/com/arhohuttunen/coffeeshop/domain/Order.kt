@@ -70,6 +70,13 @@ data class Order(
         }
         return copy(status = Status.PAID)
     }
+
+    fun markBeingPrepared(): Order {
+        if (status != Status.PAID) {
+            throw IllegalStateException("Order is not paid")
+        }
+        return copy(status = Status.PREPARING)
+    }
 }
 
 

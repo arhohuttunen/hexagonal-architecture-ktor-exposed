@@ -3,6 +3,7 @@ package com.arhohuttunen.coffeeshop.application
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
+import com.arhohuttunen.coffeeshop.application.ports.inbound.PreparingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
@@ -25,6 +26,7 @@ class AcceptanceTests : FunSpec({
     val orders: Orders = InMemoryOrders()
     val payments: Payments = InMemoryPayments()
     val customer: OrderingCoffee = CoffeeShop(orders, payments)
+    val barista: PreparingCoffee = CoffeeMachine(orders)
 
     test("customer can order coffee") {
         val orderItems = listOf(LineItem(Drink.CAPPUCCINO, Milk.SKIMMED, Size.SMALL, 1))
@@ -91,5 +93,13 @@ class AcceptanceTests : FunSpec({
 
         receipt.amount shouldBe existingOrder.cost()
         receipt.paidAt shouldBe existingPayment.paidAt
+    }
+
+    test("barista can start preparing the order when it is paid") {
+        val existingOrder = orders.save(aPaidOrder())
+
+        val orderInPreparation = barista.startPreparingOrder(existingOrder.id)
+
+        orderInPreparation.status shouldBe Status.PREPARING
     }
 })
