@@ -6,6 +6,7 @@ import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
+import com.arhohuttunen.coffeeshop.domain.Status
 import com.arhohuttunen.coffeeshop.domain.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.anOrder
 import com.arhohuttunen.coffeeshop.domain.anOrderInPreparation
@@ -19,8 +20,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerProjectExtension
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.testcontainers.containers.PostgreSQLContainer
 import kotlin.uuid.Uuid
@@ -39,17 +42,18 @@ class ExposedOrdersRepositoryTest : FunSpec({
         SchemaUtils.create(OrdersTable, OrderItemsTable)
     }
 
-    test("creating an order returns the persisted order") {
+    test("saving an order persists its location and status to the database") {
         transaction {
             val order = Order.Placed(
                 location = Location.TAKE_AWAY,
                 items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
             )
 
-            val persistedOrder = ExposedOrdersRepository.save(order)
+            ExposedOrdersRepository.save(order)
 
-            persistedOrder.location shouldBe Location.TAKE_AWAY
-            persistedOrder.items shouldContainExactly listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
+            val row = persistedOrderRow(order.id)
+            row[OrdersTable.location] shouldBe Location.TAKE_AWAY
+            row[OrdersTable.status] shouldBe Status.PAYMENT_EXPECTED
         }
     }
 
@@ -62,8 +66,9 @@ class ExposedOrdersRepositoryTest : FunSpec({
                 )
             )
 
-            val order = ExposedOrdersRepository.findById(orderId).shouldBeRight()
+            val result = ExposedOrdersRepository.findById(orderId)
 
+            val order = result.shouldBeRight()
             order.location shouldBe Location.IN_STORE
             order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
         }
@@ -134,3 +139,6 @@ fun havingPersisted(order: Order): Uuid {
     ExposedOrdersRepository.save(order)
     return order.id
 }
+
+private fun persistedOrderRow(orderId: Uuid) =
+    OrdersTable.selectAll().where { OrdersTable.id eq orderId }.single()
