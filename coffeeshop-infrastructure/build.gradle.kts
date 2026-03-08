@@ -13,11 +13,7 @@ application {
 dependencies {
     implementation(project(":coffeeshop-application"))
     implementation(libs.bundles.kotlinxEcosystem)
-    implementation(libs.ktorSerializationKotlinxJson)
-    implementation(libs.ktorServerConfigYaml)
-    implementation(libs.ktorServerContentNegotiation)
-    implementation(libs.ktorServerCore)
-    implementation(libs.ktorServerNetty)
+    implementation(libs.bundles.ktorServer)
     implementation(libs.logback)
     testImplementation(testFixtures(project(":coffeeshop-application")))
     testImplementation(libs.kotestAssertionsKtor)

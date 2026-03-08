@@ -26,6 +26,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 [bundles]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
+ktorServer = ["ktorSerializationKotlinxJson", "ktorServerConfigYaml", "ktorServerContentNegotiation", "ktorServerCore", "ktorServerNetty"]
 
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
