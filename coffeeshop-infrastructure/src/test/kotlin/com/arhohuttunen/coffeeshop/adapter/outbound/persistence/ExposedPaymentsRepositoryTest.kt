@@ -39,4 +39,21 @@ class ExposedPaymentsRepositoryTest : FunSpec({
         persistedPayment.creditCard shouldBe creditCard
         persistedPayment.paidAt shouldBe now
     }
+
+    test("finding previously made payment returns its details") {
+        val order = anOrder()
+        val creditCard = aCreditCard()
+        val now = Clock.System.now()
+        havingPersisted(order)
+        havingPersisted(Payment(order.id, creditCard, now))
+
+        val payment = ExposedPaymentsRepository.findByOrderId(order.id)
+
+        payment.creditCard shouldBe creditCard
+        payment.paidAt shouldBe now
+    }
 })
+
+fun havingPersisted(payment: Payment) {
+    ExposedPaymentsRepository.save(payment)
+}
