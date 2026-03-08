@@ -5,4 +5,5 @@ import kotlin.uuid.Uuid
 
 interface PreparingCoffee {
     fun startPreparingOrder(orderId: Uuid): Order
+    fun finishPreparingOrder(orderId: Uuid): Order
 }

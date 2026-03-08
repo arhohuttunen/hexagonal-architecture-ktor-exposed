@@ -77,6 +77,13 @@ data class Order(
         }
         return copy(status = Status.PREPARING)
     }
+
+    fun markPrepared(): Order {
+        if (status != Status.PREPARING) {
+            throw IllegalStateException("Order is not being prepared")
+        }
+        return copy(status = Status.READY)
+    }
 }
 
 

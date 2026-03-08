@@ -14,6 +14,7 @@ import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import com.arhohuttunen.coffeeshop.domain.Size
 import com.arhohuttunen.coffeeshop.domain.Status
@@ -101,5 +102,13 @@ class AcceptanceTests : FunSpec({
         val orderInPreparation = barista.startPreparingOrder(existingOrder.id)
 
         orderInPreparation.status shouldBe Status.PREPARING
+    }
+
+    test("barista can mark the order ready when they have finished preparing it") {
+        val existingOrder = orders.save(anOrderInPreparation())
+
+        val preparedOrder = barista.finishPreparingOrder(existingOrder.id)
+
+        preparedOrder.status shouldBe Status.READY
     }
 })

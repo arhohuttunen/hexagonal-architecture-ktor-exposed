@@ -11,4 +11,10 @@ class CoffeeMachine(private val orders: Orders) : PreparingCoffee {
 
         return orders.save(order.markBeingPrepared())
     }
+
+    override fun finishPreparingOrder(orderId: Uuid): Order {
+        val order = orders.findById(orderId)
+
+        return orders.save(order.markPrepared())
+    }
 }
