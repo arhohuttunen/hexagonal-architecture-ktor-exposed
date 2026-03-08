@@ -13,6 +13,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import kotlinx.serialization.Serializable
@@ -83,5 +84,9 @@ fun Route.orderRoutes(orderingCoffee: OrderingCoffee) {
         val request = call.receive<OrderRequest>()
         val order = orderingCoffee.updateOrder(Uuid.parse(call.parameters["id"]!!), request.location, request.domainItems())
         call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
+    }
+    delete("/orders/{id}") {
+        orderingCoffee.cancelOrder(Uuid.parse(call.parameters["id"]!!))
+        call.respond(HttpStatusCode.NoContent)
     }
 }

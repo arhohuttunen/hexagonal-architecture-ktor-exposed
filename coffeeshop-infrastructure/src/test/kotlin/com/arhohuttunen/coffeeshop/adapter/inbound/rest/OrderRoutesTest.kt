@@ -68,4 +68,14 @@ class OrderRoutesTest : FunSpec({
             response shouldHaveStatus HttpStatusCode.OK
         }
     }
+
+    test("cancel an order") {
+        withOrderRoutes {
+            val order = orders.save(anOrder())
+
+            val response = delete("/orders/${order.id}")
+
+            response shouldHaveStatus HttpStatusCode.NoContent
+        }
+    }
 })
