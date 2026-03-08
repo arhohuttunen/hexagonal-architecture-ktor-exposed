@@ -5,5 +5,6 @@ plugins {
 
 dependencies {
     implementation(libs.bundles.kotlinxEcosystem)
+    testFixturesImplementation(libs.bundles.kotlinxEcosystem)
     testImplementation(libs.kotestRunnerJUnit5)
 }

@@ -1,9 +1,12 @@
 package com.arhohuttunen.coffeeshop.application
 
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
+import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
+import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
+import com.arhohuttunen.coffeeshop.domain.CreditCardTestFactory.aCreditCard
 import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
@@ -19,7 +22,8 @@ import io.kotest.matchers.shouldBe
 
 class AcceptanceTests : FunSpec({
     val orders: Orders = InMemoryOrders()
-    val customer: OrderingCoffee = CoffeeShop(orders)
+    val payments: Payments = InMemoryPayments()
+    val customer: OrderingCoffee = CoffeeShop(orders, payments)
 
     test("customer can order coffee") {
         val orderItems = listOf(LineItem(Drink.CAPPUCCINO, Milk.SKIMMED, Size.SMALL, 1))
@@ -41,6 +45,14 @@ class AcceptanceTests : FunSpec({
         updatedOrder.items shouldContainExactly twoItems
     }
 
+    test("order cannot be updated if it has been paid") {
+        val existingOrder = orders.save(aPaidOrder())
+
+        shouldThrow<IllegalStateException> {
+            customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList())
+        }
+    }
+
     test("customer can cancel the order before paying") {
         val existingOrder = orders.save(anOrder())
 
@@ -57,5 +69,16 @@ class AcceptanceTests : FunSpec({
         shouldThrow<IllegalStateException> {
             customer.cancelOrder(existingOrder.id)
         }
+    }
+
+    test("customer can pay the order") {
+        val order = orders.save(anOrder())
+        val creditCard = aCreditCard()
+
+        val payment = customer.payOrder(order.id, creditCard)
+
+        payment.orderId shouldBe order.id
+        payment.creditCard shouldBe creditCard
+        orders.findById(order.id).status shouldBe Status.PAID
     }
 })

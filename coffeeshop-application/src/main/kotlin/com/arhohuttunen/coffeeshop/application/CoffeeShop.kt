@@ -2,12 +2,16 @@ package com.arhohuttunen.coffeeshop.application
 
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
+import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
+import com.arhohuttunen.coffeeshop.domain.CreditCard
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Order
+import com.arhohuttunen.coffeeshop.domain.Payment
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
-class CoffeeShop(private val orders: Orders) : OrderingCoffee {
+class CoffeeShop(private val orders: Orders, private val payments: Payments) : OrderingCoffee {
     override fun placeOrder(
         location: Location,
         items: List<LineItem>
@@ -31,5 +35,16 @@ class CoffeeShop(private val orders: Orders) : OrderingCoffee {
         if (!order.canBeCancelled()) throw IllegalStateException("Order is already paid")
 
         orders.deleteById(orderId)
+    }
+
+    override fun payOrder(
+        orderId: Uuid,
+        creditCard: CreditCard
+    ): Payment {
+        val order = orders.findById(orderId)
+
+        orders.save(order.markPaid())
+
+        return payments.save(Payment(orderId, creditCard, Clock.System.now()))
     }
 }
