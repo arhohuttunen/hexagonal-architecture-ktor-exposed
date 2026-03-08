@@ -5,15 +5,11 @@ import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
-import com.arhohuttunen.coffeeshop.domain.Drink
-import com.arhohuttunen.coffeeshop.domain.LineItem
-import com.arhohuttunen.coffeeshop.domain.Location
-import com.arhohuttunen.coffeeshop.domain.Milk
-import com.arhohuttunen.coffeeshop.domain.Order
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
-import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import com.arhohuttunen.coffeeshop.domain.Size
+import com.arhohuttunen.coffeeshop.domain.aLineItem
+import com.arhohuttunen.coffeeshop.domain.anOrder
+import com.arhohuttunen.coffeeshop.domain.aPaymentForOrder
+import com.arhohuttunen.coffeeshop.domain.aReadyOrder
 import io.kotest.assertions.json.shouldContainJsonKey
 import io.kotest.assertions.json.shouldContainJsonKeyValue
 import io.kotest.assertions.ktor.client.shouldHaveStatus
@@ -43,13 +39,7 @@ class ReceiptRoutesTest : FunSpec({
 
     test("returns receipt details when reading a receipt") {
         withReceiptRoutes { orders, payments ->
-            val order = orders.save(
-                Order.Ready(
-                    id = Uuid.random(),
-                    location = Location.TAKE_AWAY,
-                    items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 1))
-                )
-            )
+            val order = orders.save(aReadyOrder { items(aLineItem { size = Size.LARGE }) })
             payments.save(aPaymentForOrder(order.id))
 
             val body = get("/receipts/${order.id}").bodyAsText()

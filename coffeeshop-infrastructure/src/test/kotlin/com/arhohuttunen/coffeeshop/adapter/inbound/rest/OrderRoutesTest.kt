@@ -5,9 +5,9 @@ import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeMachine
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
+import com.arhohuttunen.coffeeshop.domain.aPaidOrder
+import com.arhohuttunen.coffeeshop.domain.anOrder
+import com.arhohuttunen.coffeeshop.domain.anOrderInPreparation
 import io.kotest.assertions.json.shouldContainJsonKeyValue
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.ktor.client.statement.bodyAsText

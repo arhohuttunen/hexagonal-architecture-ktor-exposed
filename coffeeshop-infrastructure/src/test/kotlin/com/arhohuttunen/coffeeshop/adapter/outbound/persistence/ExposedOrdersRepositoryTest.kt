@@ -6,10 +6,10 @@ import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
+import com.arhohuttunen.coffeeshop.domain.aPaidOrder
+import com.arhohuttunen.coffeeshop.domain.anOrder
+import com.arhohuttunen.coffeeshop.domain.anOrderInPreparation
+import com.arhohuttunen.coffeeshop.domain.aReadyOrder
 import com.arhohuttunen.coffeeshop.domain.Size
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.assertions.arrow.core.shouldBeLeft

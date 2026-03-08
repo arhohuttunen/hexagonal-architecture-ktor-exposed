@@ -1,9 +1,5 @@
 package com.arhohuttunen.coffeeshop.domain
 
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe

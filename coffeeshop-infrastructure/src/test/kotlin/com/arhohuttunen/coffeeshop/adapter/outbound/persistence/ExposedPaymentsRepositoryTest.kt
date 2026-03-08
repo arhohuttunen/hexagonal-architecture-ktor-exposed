@@ -1,7 +1,7 @@
 package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 
-import com.arhohuttunen.coffeeshop.domain.CreditCardTestFactory.aCreditCard
-import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import com.arhohuttunen.coffeeshop.domain.aCreditCard
+import com.arhohuttunen.coffeeshop.domain.anOrder
 import com.arhohuttunen.coffeeshop.domain.Payment
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.extensions.install
