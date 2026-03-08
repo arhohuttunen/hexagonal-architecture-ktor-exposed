@@ -1,4 +1,5 @@
 [versions]
+exposed = "1.1.1"
 kotest = "6.1.4"
 kotlin = "2.3.0"
 kotlinxDatetime = "0.7.1"
@@ -6,10 +7,16 @@ kotlinxSerializationJSON = "1.9.0"
 kotlinxCoroutines = "1.10.2"
 ktor = "3.4.1"
 logback = "1.5.32"
+postgresql = "42.7.10"
+testcontainers = "1.21.4"
 
 [libraries]
+exposed = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposedJdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+exposedKotlinDatetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 kotestRunnerJUnit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotestAssertionsKtor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest" }
+kotestExtensionsTestcontainers = { module = "io.kotest:kotest-extensions-testcontainers-jvm", version.ref = "kotest" }
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
@@ -23,8 +30,11 @@ ktorServerCore = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktorServerNetty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktorServerTestHost = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+testcontainersPostgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 
 [bundles]
+exposed = ["exposed", "exposedJdbc", "exposedKotlinDatetime"]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
 ktorServer = ["ktorSerializationKotlinxJson", "ktorServerConfigYaml", "ktorServerContentNegotiation", "ktorServerCore", "ktorServerNetty"]
 

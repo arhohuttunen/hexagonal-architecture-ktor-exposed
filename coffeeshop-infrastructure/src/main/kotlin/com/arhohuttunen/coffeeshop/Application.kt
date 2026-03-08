@@ -8,5 +8,6 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     val dependencies = Dependencies()
+    configureDatabase(environment.config)
     configureRouting(dependencies)
 }
