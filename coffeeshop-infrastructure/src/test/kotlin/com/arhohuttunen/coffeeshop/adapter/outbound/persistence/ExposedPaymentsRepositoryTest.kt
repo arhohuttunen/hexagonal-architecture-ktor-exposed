@@ -42,7 +42,7 @@ class ExposedPaymentsRepositoryTest : FunSpec({
                 Clock.System.now()
             )
 
-            havingPersisted(order)
+            existing(order)
 
             ExposedPaymentsRepository.save(payment)
 
@@ -59,8 +59,8 @@ class ExposedPaymentsRepositoryTest : FunSpec({
             val creditCard = aCreditCard()
             val now = Clock.System.now()
 
-            havingPersisted(order)
-            havingPersisted(Payment(order.id, creditCard, now))
+            existing(order)
+            existing(Payment(order.id, creditCard, now))
 
             val result = ExposedPaymentsRepository.findByOrderId(order.id)
 
@@ -71,7 +71,7 @@ class ExposedPaymentsRepositoryTest : FunSpec({
     }
 })
 
-fun havingPersisted(payment: Payment) {
+fun existing(payment: Payment) {
     ExposedPaymentsRepository.save(payment)
 }
 

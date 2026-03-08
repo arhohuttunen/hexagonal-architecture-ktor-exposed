@@ -59,7 +59,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a placed order returns its details") {
         transaction {
-            val orderId = havingPersisted(
+            val orderId = existing(
                 Order.Placed(
                     location = Location.IN_STORE,
                     items = listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
@@ -84,7 +84,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("deleting an order removes it") {
         transaction {
-            val orderId = havingPersisted(anOrder())
+            val orderId = existing(anOrder())
 
             ExposedOrdersRepository.deleteById(orderId)
 
@@ -96,7 +96,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a paid order returns a paid order") {
         transaction {
-            val orderId = havingPersisted(aPaidOrder())
+            val orderId = existing(aPaidOrder())
 
             val result = ExposedOrdersRepository.findById(orderId)
 
@@ -106,7 +106,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding an order in preparation returns an order in preparation") {
         transaction {
-            val orderId = havingPersisted(anOrderInPreparation())
+            val orderId = existing(anOrderInPreparation())
 
             val result = ExposedOrdersRepository.findById(orderId)
 
@@ -116,7 +116,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a ready order returns a ready order") {
         transaction {
-            val orderId = havingPersisted(aReadyOrder())
+            val orderId = existing(aReadyOrder())
 
             val result = ExposedOrdersRepository.findById(orderId)
 
@@ -126,7 +126,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
     test("finding a taken order returns a taken order") {
         transaction {
-            val orderId = havingPersisted(aReadyOrder().take())
+            val orderId = existing(aReadyOrder().take())
 
             val result = ExposedOrdersRepository.findById(orderId)
 
@@ -135,7 +135,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 })
 
-fun havingPersisted(order: Order): Uuid {
+fun existing(order: Order): Uuid {
     ExposedOrdersRepository.save(order)
     return order.id
 }
