@@ -36,47 +36,53 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 
     test("creating an order returns the persisted order") {
-        val order = Order.Placed(
-            location = Location.TAKE_AWAY,
-            items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
-        )
+        transaction {
+            val order = Order.Placed(
+                location = Location.TAKE_AWAY,
+                items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
+            )
 
-        val persistedOrder = ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
+            val persistedOrder = ExposedOrdersRepository.save(order)
 
-        persistedOrder.location shouldBe Location.TAKE_AWAY
-        persistedOrder.items shouldContainExactly listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
+            persistedOrder.location shouldBe Location.TAKE_AWAY
+            persistedOrder.items shouldContainExactly listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
+        }
     }
 
     test("finding a placed order returns its details") {
-        val orderId = havingPersisted(
-            Order.Placed(
-                location = Location.IN_STORE,
-                items = listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
+        transaction {
+            val orderId = havingPersisted(
+                Order.Placed(
+                    location = Location.IN_STORE,
+                    items = listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
+                )
             )
-        )
 
-        val order = ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }.shouldBeRight()
+            val order = ExposedOrdersRepository.findById(orderId).shouldBeRight()
 
-        order.location shouldBe Location.IN_STORE
-        order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
+            order.location shouldBe Location.IN_STORE
+            order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
+        }
     }
 
     test("finding a non-existing order returns NotFound") {
-        ExposedTransactionScope.execute { ExposedOrdersRepository.findById(Uuid.random()) }
-            .shouldBeLeft() shouldBe OrderError.NotFound
+        transaction {
+            ExposedOrdersRepository.findById(Uuid.random()).shouldBeLeft() shouldBe OrderError.NotFound
+        }
     }
 
     test("deleting an order removes it") {
-        val orderId = havingPersisted(anOrder())
+        transaction {
+            val orderId = havingPersisted(anOrder())
 
-        ExposedTransactionScope.execute { ExposedOrdersRepository.deleteById(orderId) }
+            ExposedOrdersRepository.deleteById(orderId)
 
-        ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
-            .shouldBeLeft() shouldBe OrderError.NotFound
+            ExposedOrdersRepository.findById(orderId).shouldBeLeft() shouldBe OrderError.NotFound
+        }
     }
 })
 
 fun havingPersisted(order: Order): Uuid {
-    ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
+    ExposedOrdersRepository.save(order)
     return order.id
 }

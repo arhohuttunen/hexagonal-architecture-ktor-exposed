@@ -29,32 +29,36 @@ class ExposedPaymentsRepositoryTest : FunSpec({
     }
 
     test("creating a payment returns the persisted payment") {
-        val order = anOrder()
-        val creditCard = aCreditCard()
-        val now = Clock.System.now()
-        val payment = Payment(order.id, creditCard, now)
-        havingPersisted(order)
+        transaction {
+            val order = anOrder()
+            val creditCard = aCreditCard()
+            val now = Clock.System.now()
+            val payment = Payment(order.id, creditCard, now)
+            havingPersisted(order)
 
-        val persistedPayment = ExposedTransactionScope.execute { ExposedPaymentsRepository.save(payment) }
+            val persistedPayment = ExposedPaymentsRepository.save(payment)
 
-        persistedPayment.creditCard shouldBe creditCard
-        persistedPayment.paidAt shouldBe now
+            persistedPayment.creditCard shouldBe creditCard
+            persistedPayment.paidAt shouldBe now
+        }
     }
 
     test("finding previously made payment returns its details") {
-        val order = anOrder()
-        val creditCard = aCreditCard()
-        val now = Clock.System.now()
-        havingPersisted(order)
-        havingPersisted(Payment(order.id, creditCard, now))
+        transaction {
+            val order = anOrder()
+            val creditCard = aCreditCard()
+            val now = Clock.System.now()
+            havingPersisted(order)
+            havingPersisted(Payment(order.id, creditCard, now))
 
-        val payment = ExposedTransactionScope.execute { ExposedPaymentsRepository.findByOrderId(order.id) }.shouldBeRight()
+            val payment = ExposedPaymentsRepository.findByOrderId(order.id).shouldBeRight()
 
-        payment.creditCard shouldBe creditCard
-        payment.paidAt shouldBe now
+            payment.creditCard shouldBe creditCard
+            payment.paidAt shouldBe now
+        }
     }
 })
 
 fun havingPersisted(payment: Payment) {
-    ExposedTransactionScope.execute { ExposedPaymentsRepository.save(payment) }
+    ExposedPaymentsRepository.save(payment)
 }
