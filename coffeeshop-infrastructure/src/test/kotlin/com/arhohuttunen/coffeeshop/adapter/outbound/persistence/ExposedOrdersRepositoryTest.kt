@@ -1,11 +1,13 @@
 package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 
+import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.Size
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerProjectExtension
@@ -15,6 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.testcontainers.containers.PostgreSQLContainer
+import kotlin.uuid.Uuid
 
 class ExposedOrdersRepositoryTest : FunSpec({
     val postgres = install(TestContainerProjectExtension(PostgreSQLContainer<Nothing>("postgres")))
@@ -43,4 +46,31 @@ class ExposedOrdersRepositoryTest : FunSpec({
         persistedOrder.location shouldBe Location.TAKE_AWAY
         persistedOrder.items shouldContainExactly listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
     }
+
+    test("finding a placed order returns its details") {
+        val orderId = havingPersisted(
+            Order(
+                location = Location.IN_STORE,
+                items = listOf(
+                    LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1)
+                )
+            )
+        )
+
+        val order = ExposedOrdersRepository.findById(orderId)
+
+        order.location shouldBe Location.IN_STORE
+        order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
+    }
+
+    test("finding a non-existing order throws an exception") {
+        shouldThrow<OrderNotFound> {
+            ExposedOrdersRepository.findById(Uuid.random())
+        }
+    }
 })
+
+fun havingPersisted(order: Order): Uuid {
+    ExposedOrdersRepository.save(order)
+    return order.id
+}
