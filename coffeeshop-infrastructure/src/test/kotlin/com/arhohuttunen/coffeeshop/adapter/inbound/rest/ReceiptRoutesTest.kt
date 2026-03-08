@@ -3,40 +3,23 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
+import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
+import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
 import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
-import io.ktor.client.HttpClient
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.testing.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.testing.testApplication
 
 class ReceiptRoutesTest : FunSpec({
-    val orders = InMemoryOrders()
-    val payments = InMemoryPayments()
-    val orderingCoffee = CoffeeShop(orders, payments)
-
-    fun withReceiptRoutes(block: suspend HttpClient.() -> Unit) {
-        testApplication {
-            install(ContentNegotiation) {
-                json()
-            }
-            routing {
-                receiptRoutes(orderingCoffee)
-            }
-            createClient {
-                install(ClientContentNegotiation)
-            }.use { client -> block(client) }
-        }
-    }
-
     test("read a receipt") {
-        withReceiptRoutes {
+        withReceiptRoutes { orders, payments ->
             val order = orders.save(aReadyOrder())
             payments.save(aPaymentForOrder(order.id))
 
@@ -47,7 +30,7 @@ class ReceiptRoutesTest : FunSpec({
     }
 
     test("take an order") {
-        withReceiptRoutes {
+        withReceiptRoutes { orders, _ ->
             val order = orders.save(aReadyOrder())
 
             val response = delete("/receipt/${order.id}")
@@ -56,3 +39,21 @@ class ReceiptRoutesTest : FunSpec({
         }
     }
 })
+
+fun withReceiptRoutes(test: suspend HttpClient.(orders: Orders, payments: Payments) -> Unit) {
+    val orders = InMemoryOrders()
+    val payments = InMemoryPayments()
+    val orderingCoffee = CoffeeShop(orders, payments)
+
+    testApplication {
+        install(ContentNegotiation) {
+            json()
+        }
+        routing {
+            receiptRoutes(orderingCoffee)
+        }
+        createClient {
+            install(ClientContentNegotiation)
+        }.use { client -> test(client, orders, payments) }
+    }
+}

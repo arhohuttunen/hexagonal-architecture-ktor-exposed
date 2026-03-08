@@ -3,10 +3,11 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
+import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -27,24 +28,6 @@ class OrderRoutesTest : FunSpec({
         }
     """.trimIndent()
 
-    val orders = InMemoryOrders()
-    val payments = InMemoryPayments()
-    val orderingCoffee = CoffeeShop(orders, payments)
-
-    fun withOrderRoutes(block: suspend HttpClient.() -> Unit) {
-        testApplication {
-            install(ContentNegotiation) {
-                json()
-            }
-            routing {
-                orderRoutes(orderingCoffee)
-            }
-            createClient {
-                install(ClientContentNegotiation)
-            }.use { client -> block(client) }
-        }
-    }
-
     test("create an order") {
         withOrderRoutes {
             val response = post("/orders") {
@@ -57,7 +40,7 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("update an order") {
-        withOrderRoutes {
+        withOrderRoutes { orders ->
             val order = orders.save(anOrder())
 
             val response = put("/orders/${order.id}") {
@@ -70,7 +53,7 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("cancel an order") {
-        withOrderRoutes {
+        withOrderRoutes { orders ->
             val order = orders.save(anOrder())
 
             val response = delete("/orders/${order.id}")
@@ -79,3 +62,21 @@ class OrderRoutesTest : FunSpec({
         }
     }
 })
+
+fun withOrderRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
+    val orders = InMemoryOrders()
+    val payments = InMemoryPayments()
+    val orderingCoffee = CoffeeShop(orders, payments)
+
+    testApplication {
+        install(ContentNegotiation) {
+            json()
+        }
+        routing {
+            orderRoutes(orderingCoffee)
+        }
+        createClient {
+            install(ClientContentNegotiation)
+        }.use { client -> test(client, orders) }
+    }
+}
