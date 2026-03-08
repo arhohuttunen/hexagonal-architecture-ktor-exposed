@@ -14,8 +14,10 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
+import kotlin.uuid.Uuid
 
 @Serializable
 data class LineItemRequest(
@@ -76,5 +78,10 @@ fun Route.orderRoutes(orderingCoffee: OrderingCoffee) {
         val order = orderingCoffee.placeOrder(request.location, request.domainItems())
         call.response.headers.append(HttpHeaders.Location, "${call.request.uri}/${order.id}")
         call.respond(HttpStatusCode.Created, OrderResponse.fromDomain(order))
+    }
+    put("/orders/{id}") {
+        val request = call.receive<OrderRequest>()
+        val order = orderingCoffee.updateOrder(Uuid.parse(call.parameters["id"]!!), request.location, request.domainItems())
+        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
     }
 }

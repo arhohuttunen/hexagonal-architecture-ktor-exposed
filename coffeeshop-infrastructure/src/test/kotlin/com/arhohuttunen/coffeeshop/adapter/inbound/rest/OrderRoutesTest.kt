@@ -1,12 +1,18 @@
 package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 
-import com.arhohuttunen.coffeeshop.module
+import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
+import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
+import com.arhohuttunen.coffeeshop.application.CoffeeShop
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
-import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.HttpClient
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 class OrderRoutesTest : FunSpec({
     val orderJson = """
@@ -20,20 +26,46 @@ class OrderRoutesTest : FunSpec({
             }]
         }
     """.trimIndent()
-    
-    test("create an order") {
-        testApplication {
-            application { module() }
-            val client = createClient {
-                install(ContentNegotiation)
-            }
 
-            val response = client.post("/orders") {
+    val orders = InMemoryOrders()
+    val payments = InMemoryPayments()
+    val orderingCoffee = CoffeeShop(orders, payments)
+
+    fun withOrderRoutes(block: suspend HttpClient.() -> Unit) {
+        testApplication {
+            install(ContentNegotiation) {
+                json()
+            }
+            routing {
+                orderRoutes(orderingCoffee)
+            }
+            createClient {
+                install(ClientContentNegotiation)
+            }.use { client -> block(client) }
+        }
+    }
+
+    test("create an order") {
+        withOrderRoutes {
+            val response = post("/orders") {
                 contentType(ContentType.Application.Json)
                 setBody(orderJson)
             }
 
             response shouldHaveStatus HttpStatusCode.Created
+        }
+    }
+
+    test("update an order") {
+        withOrderRoutes {
+            val order = orders.save(anOrder())
+
+            val response = put("/orders/${order.id}") {
+                contentType(ContentType.Application.Json)
+                setBody(orderJson)
+            }
+
+            response shouldHaveStatus HttpStatusCode.OK
         }
     }
 })

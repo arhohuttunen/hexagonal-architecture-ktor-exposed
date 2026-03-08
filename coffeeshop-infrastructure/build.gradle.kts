@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.ktorServerCore)
     implementation(libs.ktorServerNetty)
     implementation(libs.logback)
+    testImplementation(testFixtures(project(":coffeeshop-application")))
     testImplementation(libs.kotestAssertionsKtor)
     testImplementation(libs.kotestRunnerJUnit5)
     testImplementation(libs.ktorClientContentNegotiation)
