@@ -8,6 +8,7 @@ import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -40,6 +41,16 @@ class ReceiptRoutesTest : FunSpec({
             payments.save(aPaymentForOrder(order.id))
 
             val response = get("/receipt/${order.id}")
+
+            response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
+
+    test("take an order") {
+        withReceiptRoutes {
+            val order = orders.save(aReadyOrder())
+
+            val response = delete("/receipt/${order.id}")
 
             response shouldHaveStatus HttpStatusCode.OK
         }
