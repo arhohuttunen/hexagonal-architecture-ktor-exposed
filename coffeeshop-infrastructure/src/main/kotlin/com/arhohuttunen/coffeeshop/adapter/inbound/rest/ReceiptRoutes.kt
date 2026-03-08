@@ -28,11 +28,11 @@ data class ReceiptResponse(
 }
 
 fun Route.receiptRoutes(orderingCoffee: OrderingCoffee) {
-    get("/receipt/{id}") {
+    get("/receipts/{id}") {
         val receipt = orderingCoffee.readReceipt(Uuid.parse(call.parameters["id"]!!))
         call.respond(HttpStatusCode.OK, ReceiptResponse.fromDomain(receipt))
     }
-    delete("/receipt/{id}") {
+    delete("/receipts/{id}") {
         val order = orderingCoffee.takeOrder(Uuid.parse(call.parameters["id"]!!))
         call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
     }

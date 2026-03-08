@@ -23,7 +23,7 @@ class ReceiptRoutesTest : FunSpec({
             val order = orders.save(aReadyOrder())
             payments.save(aPaymentForOrder(order.id))
 
-            val response = get("/receipt/${order.id}")
+            val response = get("/receipts/${order.id}")
 
             response shouldHaveStatus HttpStatusCode.OK
         }
@@ -33,7 +33,7 @@ class ReceiptRoutesTest : FunSpec({
         withReceiptRoutes { orders, _ ->
             val order = orders.save(aReadyOrder())
 
-            val response = delete("/receipt/${order.id}")
+            val response = delete("/receipts/${order.id}")
 
             response shouldHaveStatus HttpStatusCode.OK
         }
