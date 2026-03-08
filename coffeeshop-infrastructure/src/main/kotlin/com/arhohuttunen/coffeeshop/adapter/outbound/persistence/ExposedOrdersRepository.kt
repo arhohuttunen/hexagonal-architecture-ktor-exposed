@@ -17,9 +17,9 @@ object ExposedOrdersRepository : Orders {
     override fun save(order: Order): Order {
         transaction {
             OrdersTable.upsert {
-                it[id] = order.id
-                it[location] = order.location
-                it[status] = order.status
+                it[OrdersTable.id] = order.id
+                it[OrdersTable.location] = order.location
+                it[OrdersTable.status] = order.status
             }
 
             OrderItemsTable.deleteWhere { OrderItemsTable.orderId eq order.id }
@@ -66,5 +66,6 @@ private fun ResultRow.toLineItem() = LineItem(
 private fun ResultRow.toOrder(items: List<LineItem>) = Order(
     id = this[OrdersTable.id],
     location = this[OrdersTable.location],
-    items = items
+    items = items,
+    status = this[OrdersTable.status]
 )
