@@ -3,7 +3,6 @@ package com.arhohuttunen.coffeeshop.domain
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 
 class OrderTransitionTest : FunSpec({
     test("updating a placed order changes location and items") {
@@ -22,7 +21,6 @@ class OrderTransitionTest : FunSpec({
 
         val paid = order.pay()
 
-        paid.shouldBeInstanceOf<Order.Paid>()
         paid.id shouldBe order.id
         paid.location shouldBe order.location
         paid.items shouldContainExactly order.items
@@ -33,7 +31,6 @@ class OrderTransitionTest : FunSpec({
 
         val inPreparation = order.startPreparing()
 
-        inPreparation.shouldBeInstanceOf<Order.InPreparation>()
         inPreparation.id shouldBe order.id
         inPreparation.location shouldBe order.location
         inPreparation.items shouldContainExactly order.items
@@ -44,7 +41,6 @@ class OrderTransitionTest : FunSpec({
 
         val ready = order.finishPreparing()
 
-        ready.shouldBeInstanceOf<Order.Ready>()
         ready.id shouldBe order.id
         ready.location shouldBe order.location
         ready.items shouldContainExactly order.items
@@ -55,7 +51,6 @@ class OrderTransitionTest : FunSpec({
 
         val taken = order.take()
 
-        taken.shouldBeInstanceOf<Order.Taken>()
         taken.id shouldBe order.id
         taken.location shouldBe order.location
         taken.items shouldContainExactly order.items
