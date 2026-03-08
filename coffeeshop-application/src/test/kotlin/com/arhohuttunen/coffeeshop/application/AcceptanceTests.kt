@@ -13,6 +13,7 @@ import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
@@ -110,5 +111,13 @@ class AcceptanceTests : FunSpec({
         val preparedOrder = barista.finishPreparingOrder(existingOrder.id)
 
         preparedOrder.status shouldBe Status.READY
+    }
+
+    test("customer can take the order when it is ready") {
+        val existingOrder = orders.save(aReadyOrder())
+
+        val takenOrder = customer.takeOrder(existingOrder.id)
+
+        takenOrder.status shouldBe Status.TAKEN
     }
 })

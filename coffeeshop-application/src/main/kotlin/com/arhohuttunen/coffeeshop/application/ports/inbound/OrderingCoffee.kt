@@ -14,4 +14,5 @@ interface OrderingCoffee {
     fun cancelOrder(orderId: Uuid)
     fun payOrder(orderId: Uuid, creditCard: CreditCard): Payment
     fun readReceipt(orderId: Uuid): Receipt
+    fun takeOrder(orderId: Uuid): Order
 }

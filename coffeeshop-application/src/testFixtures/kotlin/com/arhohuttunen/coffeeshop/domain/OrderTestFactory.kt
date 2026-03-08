@@ -14,4 +14,7 @@ object OrderTestFactory {
 
     fun anOrderInPreparation() =
         aPaidOrder().markBeingPrepared()
+
+    fun aReadyOrder() =
+        anOrderInPreparation().markPrepared()
 }

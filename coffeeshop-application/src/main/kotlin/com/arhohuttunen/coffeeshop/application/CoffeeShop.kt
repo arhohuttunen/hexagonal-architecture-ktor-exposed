@@ -55,4 +55,10 @@ class CoffeeShop(private val orders: Orders, private val payments: Payments) : O
 
         return Receipt(order.cost(), payment.paidAt)
     }
+
+    override fun takeOrder(orderId: Uuid): Order {
+        val order = orders.findById(orderId)
+
+        return orders.save(order.markTaken())
+    }
 }

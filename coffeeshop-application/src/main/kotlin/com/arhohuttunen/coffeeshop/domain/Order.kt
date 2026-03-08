@@ -84,6 +84,13 @@ data class Order(
         }
         return copy(status = Status.READY)
     }
+
+    fun markTaken(): Order {
+        if (status != Status.READY) {
+            throw IllegalStateException("Order is not ready")
+        }
+        return copy(status = Status.TAKEN)
+    }
 }
 
 
