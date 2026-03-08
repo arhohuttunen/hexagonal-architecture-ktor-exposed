@@ -8,7 +8,9 @@ import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
+import io.kotest.assertions.json.shouldContainJsonKeyValue
 import io.kotest.assertions.ktor.client.shouldHaveStatus
+import io.ktor.client.statement.bodyAsText
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.*
 import io.ktor.client.request.*
@@ -20,26 +22,32 @@ import io.ktor.server.testing.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 class OrderRoutesTest : FunSpec({
-    val orderJson = """
-        {
-            "location": "IN_STORE",
-            "items": [{
-                "drink": "LATTE",
-                "quantity": 1,
-                "milk": "WHOLE",
-                "size": "LARGE"
-            }]
-        }
-    """.trimIndent()
-
     test("returns created when placing an order") {
         withOrderRoutes {
             val response = post("/orders") {
                 contentType(ContentType.Application.Json)
-                setBody(orderJson)
+                setBody(someOrderContents)
             }
 
             response shouldHaveStatus HttpStatusCode.Created
+        }
+    }
+
+    test("returns order details when placing an order") {
+        withOrderRoutes {
+            val body = post("/orders") {
+                contentType(ContentType.Application.Json)
+                setBody("""
+                    {
+                        "location": "IN_STORE",
+                        "items": [{"drink": "LATTE", "milk": "WHOLE", "size": "LARGE", "quantity": 1}]
+                    }
+                """.trimIndent())
+            }.bodyAsText()
+
+            body.shouldContainJsonKeyValue("$.location", "IN_STORE")
+            body.shouldContainJsonKeyValue("$.items[0].drink", "LATTE")
+            body.shouldContainJsonKeyValue("$.cost", "5.00")
         }
     }
 
@@ -49,7 +57,7 @@ class OrderRoutesTest : FunSpec({
 
             val response = put("/orders/${order.id}") {
                 contentType(ContentType.Application.Json)
-                setBody(orderJson)
+                setBody(someOrderContents)
             }
 
             response shouldHaveStatus HttpStatusCode.OK
@@ -92,7 +100,7 @@ class OrderRoutesTest : FunSpec({
 
             val response = put("/orders/${order.id}") {
                 contentType(ContentType.Application.Json)
-                setBody(orderJson)
+                setBody(someOrderContents)
             }
 
             response shouldHaveStatus HttpStatusCode.Conflict
@@ -119,6 +127,14 @@ class OrderRoutesTest : FunSpec({
         }
     }
 })
+
+private val someOrderContents = """
+        {
+            "location": "IN_STORE",
+            "items": [{"drink": "LATTE", "quantity": 1, "milk": "WHOLE", "size": "LARGE"}]
+        }
+    """.trimIndent()
+
 
 fun withOrderRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
     val orders = InMemoryOrders()

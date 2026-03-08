@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.postgresql)
     testImplementation(testFixtures(project(":coffeeshop-application")))
     testImplementation(libs.kotestAssertionsArrow)
+    testImplementation(libs.kotestAssertionsJson)
     testImplementation(libs.kotestAssertionsKtor)
     testImplementation(libs.kotestExtensionsTestcontainers)
     testImplementation(libs.kotestRunnerJUnit5)

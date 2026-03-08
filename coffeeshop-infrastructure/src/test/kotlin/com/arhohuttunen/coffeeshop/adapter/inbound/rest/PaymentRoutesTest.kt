@@ -5,7 +5,10 @@ import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import io.kotest.assertions.json.shouldContainJsonKey
+import io.kotest.assertions.json.shouldContainJsonKeyValue
 import io.kotest.assertions.ktor.client.shouldHaveStatus
+import io.ktor.client.statement.bodyAsText
 import io.kotest.core.spec.style.FunSpec
 import io.ktor.client.*
 import io.ktor.client.request.*
@@ -36,6 +39,28 @@ class PaymentRoutesTest : FunSpec({
             }
 
             response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
+
+    test("returns payment details when paying an order") {
+        withPaymentRoutes { orders ->
+            val order = orders.save(anOrder())
+
+            val body = put("/payments/${order.id}") {
+                contentType(ContentType.Application.Json)
+                setBody("""
+                    {
+                        "cardHolderName": "Michael Faraday",
+                        "cardNumber": "11223344",
+                        "expiry": "2023-12"
+                    }
+                """.trimIndent())
+            }.bodyAsText()
+
+            body.shouldContainJsonKeyValue("$.cardHolderName", "Michael Faraday")
+            body.shouldContainJsonKeyValue("$.cardNumber", "11223344")
+            body.shouldContainJsonKeyValue("$.expiry", "2023-12")
+            body.shouldContainJsonKey("$.paidAt")
         }
     }
 
