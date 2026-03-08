@@ -1,5 +1,6 @@
 package com.arhohuttunen.coffeeshop.domain
 
+import java.math.BigDecimal
 import kotlin.uuid.Uuid
 
 enum class Drink {
@@ -24,7 +25,14 @@ data class LineItem(
     val milk: Milk,
     val size: Size,
     val quantity: Int
-)
+) {
+    fun cost(): BigDecimal =
+        if (size == Size.SMALL) {
+            BigDecimal("4.00")
+        } else {
+            BigDecimal("5.00")
+        }.multiply(quantity.toBigDecimal())
+}
 
 enum class Location {
     IN_STORE,
@@ -45,14 +53,16 @@ data class Order(
     val items: List<LineItem>,
     val status: Status = Status.PAYMENT_EXPECTED
 ) {
+    fun canBeCancelled() = status == Status.PAYMENT_EXPECTED
+
+    fun cost() = items.map(LineItem::cost).reduce(BigDecimal::add)
+
     fun update(location: Location, items: List<LineItem>): Order {
         if (status == Status.PAID) {
             throw IllegalStateException("Order is already paid")
         }
         return copy(location = location, items = items)
     }
-
-    fun canBeCancelled() = status == Status.PAYMENT_EXPECTED
 
     fun markPaid(): Order {
         if (status != Status.PAYMENT_EXPECTED) {
