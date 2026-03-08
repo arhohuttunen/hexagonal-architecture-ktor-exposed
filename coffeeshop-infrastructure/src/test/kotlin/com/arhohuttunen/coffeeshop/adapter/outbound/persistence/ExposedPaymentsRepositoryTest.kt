@@ -36,10 +36,11 @@ class ExposedPaymentsRepositoryTest : FunSpec({
     test("saving a payment persists its data to the database") {
         transaction {
             val order = anOrder()
+            val now = Clock.System.now()
             val payment = Payment(
                 order.id,
                 CreditCard("Michael Faraday", "11223344", YearMonth.parse("2027-02")),
-                Clock.System.now()
+                now
             )
 
             existing(order)
@@ -50,6 +51,7 @@ class ExposedPaymentsRepositoryTest : FunSpec({
             row[PaymentsTable.cardHolderName] shouldBe "Michael Faraday"
             row[PaymentsTable.cardNumber] shouldBe "11223344"
             row[PaymentsTable.cardExpiry] shouldBe "2027-02"
+            row[PaymentsTable.paidAt] shouldBe now
         }
     }
 
