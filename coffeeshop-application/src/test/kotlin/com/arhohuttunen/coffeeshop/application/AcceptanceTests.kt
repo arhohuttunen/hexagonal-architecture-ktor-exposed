@@ -47,14 +47,17 @@ class AcceptanceTests : FunSpec({
         val twoItems = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 2))
 
         val order = customer.placeOrder(location = Location.TAKE_AWAY, items = oneItem)
+        val updatedOrder = customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight()
 
-        customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight().items shouldContainExactly twoItems
+        updatedOrder.items shouldContainExactly twoItems
     }
 
     test("order cannot be updated if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft() shouldBe OrderError.AlreadyPaid
+        val error = customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft()
+
+        error shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can cancel the order before paying") {
@@ -68,7 +71,9 @@ class AcceptanceTests : FunSpec({
     test("an order cannot be cancelled if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        customer.cancelOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.AlreadyPaid
+        val error = customer.cancelOrder(existingOrder.id).shouldBeLeft()
+
+        error shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can pay the order") {
@@ -95,18 +100,24 @@ class AcceptanceTests : FunSpec({
     test("barista can start preparing the order when it is paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        barista.startPreparingOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.InPreparation>()
+        val order = barista.startPreparingOrder(existingOrder.id).shouldBeRight()
+
+        order.shouldBeInstanceOf<Order.InPreparation>()
     }
 
     test("barista can mark the order ready when they have finished preparing it") {
         val existingOrder = orders.save(anOrderInPreparation())
 
-        barista.finishPreparingOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.Ready>()
+        val order = barista.finishPreparingOrder(existingOrder.id).shouldBeRight()
+
+        order.shouldBeInstanceOf<Order.Ready>()
     }
 
     test("customer can take the order when it is ready") {
         val existingOrder = orders.save(aReadyOrder())
 
-        customer.takeOrder(existingOrder.id).shouldBeRight().shouldBeInstanceOf<Order.Taken>()
+        val order = customer.takeOrder(existingOrder.id).shouldBeRight()
+
+        order.shouldBeInstanceOf<Order.Taken>()
     }
 })
