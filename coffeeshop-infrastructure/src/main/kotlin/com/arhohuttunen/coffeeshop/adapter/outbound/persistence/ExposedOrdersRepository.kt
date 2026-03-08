@@ -49,7 +49,10 @@ object ExposedOrdersRepository : Orders {
     }
 
     override fun deleteById(orderId: Uuid) {
-        TODO("Not yet implemented")
+        transaction {
+            OrderItemsTable.deleteWhere { this.orderId eq orderId }
+            OrdersTable.deleteWhere { id eq orderId }
+        }
     }
 }
 

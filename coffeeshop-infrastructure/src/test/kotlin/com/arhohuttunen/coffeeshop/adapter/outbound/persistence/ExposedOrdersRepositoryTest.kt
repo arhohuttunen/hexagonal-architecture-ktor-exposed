@@ -6,6 +6,7 @@ import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.Size
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.extensions.install
@@ -66,6 +67,16 @@ class ExposedOrdersRepositoryTest : FunSpec({
     test("finding a non-existing order throws an exception") {
         shouldThrow<OrderNotFound> {
             ExposedOrdersRepository.findById(Uuid.random())
+        }
+    }
+
+    test("deleting an order removes it") {
+        val orderId = havingPersisted(anOrder())
+
+        ExposedOrdersRepository.deleteById(orderId)
+
+        shouldThrow<OrderNotFound> {
+            ExposedOrdersRepository.findById(orderId)
         }
     }
 })
