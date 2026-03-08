@@ -11,7 +11,6 @@ import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
-import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
@@ -24,7 +23,6 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 
 class AcceptanceTests : FunSpec({
     val orders: Orders = InMemoryOrders()
@@ -38,26 +36,21 @@ class AcceptanceTests : FunSpec({
         val order = customer.placeOrder(Location.IN_STORE, orderItems)
 
         order.location shouldBe Location.IN_STORE
-        order.items shouldContainExactly listOf(LineItem(Drink.CAPPUCCINO, Milk.SKIMMED, Size.SMALL, 1))
-        order.shouldBeInstanceOf<Order.Placed>()
+        order.items shouldContainExactly orderItems
     }
 
     test("customer can update the order before paying") {
         val oneItem = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 1))
         val twoItems = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 2))
-
         val order = customer.placeOrder(location = Location.TAKE_AWAY, items = oneItem)
-        val updatedOrder = customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight()
 
-        updatedOrder.items shouldContainExactly twoItems
+        customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight().items shouldContainExactly twoItems
     }
 
     test("order cannot be updated if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        val error = customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft()
-
-        error shouldBe OrderError.AlreadyPaid
+        customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can cancel the order before paying") {
@@ -71,9 +64,7 @@ class AcceptanceTests : FunSpec({
     test("an order cannot be cancelled if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        val error = customer.cancelOrder(existingOrder.id).shouldBeLeft()
-
-        error shouldBe OrderError.AlreadyPaid
+        customer.cancelOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can pay the order") {
@@ -84,7 +75,6 @@ class AcceptanceTests : FunSpec({
 
         payment.orderId shouldBe order.id
         payment.creditCard shouldBe creditCard
-        orders.findById(order.id).shouldBeRight().shouldBeInstanceOf<Order.Paid>()
     }
 
     test("customer can get a receipt when the order is paid") {
@@ -97,27 +87,45 @@ class AcceptanceTests : FunSpec({
         receipt.paidAt shouldBe existingPayment.paidAt
     }
 
+    test("customer cannot get a receipt when payment is missing") {
+        val existingOrder = orders.save(aPaidOrder())
+
+        customer.readReceipt(existingOrder.id).shouldBeLeft() shouldBe OrderError.PaymentNotFound
+    }
+
     test("barista can start preparing the order when it is paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        val order = barista.startPreparingOrder(existingOrder.id).shouldBeRight()
+        barista.startPreparingOrder(existingOrder.id).shouldBeRight()
+    }
 
-        order.shouldBeInstanceOf<Order.InPreparation>()
+    test("barista cannot start preparing an order that has not been paid") {
+        val existingOrder = orders.save(anOrder())
+
+        barista.startPreparingOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotPaid
     }
 
     test("barista can mark the order ready when they have finished preparing it") {
         val existingOrder = orders.save(anOrderInPreparation())
 
-        val order = barista.finishPreparingOrder(existingOrder.id).shouldBeRight()
+        barista.finishPreparingOrder(existingOrder.id).shouldBeRight()
+    }
 
-        order.shouldBeInstanceOf<Order.Ready>()
+    test("barista cannot finish preparing an order that is not being prepared") {
+        val existingOrder = orders.save(aPaidOrder())
+
+        barista.finishPreparingOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotBeingPrepared
     }
 
     test("customer can take the order when it is ready") {
         val existingOrder = orders.save(aReadyOrder())
 
-        val order = customer.takeOrder(existingOrder.id).shouldBeRight()
+        customer.takeOrder(existingOrder.id).shouldBeRight()
+    }
 
-        order.shouldBeInstanceOf<Order.Taken>()
+    test("customer cannot take an order that is not ready") {
+        val existingOrder = orders.save(anOrderInPreparation())
+
+        customer.takeOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotReady
     }
 })

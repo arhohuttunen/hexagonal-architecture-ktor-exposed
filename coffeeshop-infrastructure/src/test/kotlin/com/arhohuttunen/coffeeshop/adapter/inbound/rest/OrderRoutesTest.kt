@@ -32,7 +32,7 @@ class OrderRoutesTest : FunSpec({
         }
     """.trimIndent()
 
-    test("create an order") {
+    test("returns created when placing an order") {
         withOrderRoutes {
             val response = post("/orders") {
                 contentType(ContentType.Application.Json)
@@ -43,7 +43,7 @@ class OrderRoutesTest : FunSpec({
         }
     }
 
-    test("update an order") {
+    test("returns ok when updating an order") {
         withOrderRoutes { orders ->
             val order = orders.save(anOrder())
 
@@ -56,7 +56,7 @@ class OrderRoutesTest : FunSpec({
         }
     }
 
-    test("cancel an order") {
+    test("returns no content when cancelling an order") {
         withOrderRoutes { orders ->
             val order = orders.save(anOrder())
 
@@ -66,7 +66,7 @@ class OrderRoutesTest : FunSpec({
         }
     }
 
-    test("prepare an order") {
+    test("returns ok when starting preparation of an order") {
         withOrderRoutes { orders ->
             val order = orders.save(aPaidOrder())
 
@@ -76,13 +76,46 @@ class OrderRoutesTest : FunSpec({
         }
     }
 
-    test("finish preparing an order") {
+    test("returns ok when finishing preparation of an order") {
         withOrderRoutes { orders ->
             val order = orders.save(anOrderInPreparation())
 
             val response = delete("/orders/${order.id}/preparation")
 
             response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
+
+    test("returns conflict when updating a paid order") {
+        withOrderRoutes { orders ->
+            val order = orders.save(aPaidOrder())
+
+            val response = put("/orders/${order.id}") {
+                contentType(ContentType.Application.Json)
+                setBody(orderJson)
+            }
+
+            response shouldHaveStatus HttpStatusCode.Conflict
+        }
+    }
+
+    test("returns conflict when cancelling a paid order") {
+        withOrderRoutes { orders ->
+            val order = orders.save(aPaidOrder())
+
+            val response = delete("/orders/${order.id}")
+
+            response shouldHaveStatus HttpStatusCode.Conflict
+        }
+    }
+
+    test("returns conflict when preparing an unpaid order") {
+        withOrderRoutes { orders ->
+            val order = orders.save(anOrder())
+
+            val response = put("/orders/${order.id}/preparation")
+
+            response shouldHaveStatus HttpStatusCode.Conflict
         }
     }
 })

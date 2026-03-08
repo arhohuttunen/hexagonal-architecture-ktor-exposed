@@ -14,6 +14,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.resources.Resources
 import io.ktor.server.testing.*
+import kotlin.uuid.Uuid
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 class PaymentRoutesTest : FunSpec({
@@ -25,7 +26,7 @@ class PaymentRoutesTest : FunSpec({
         }
     """.trimIndent()
 
-    test("pay an order") {
+    test("returns ok when paying an order") {
         withPaymentRoutes { orders ->
             val order = orders.save(anOrder())
 
@@ -35,6 +36,17 @@ class PaymentRoutesTest : FunSpec({
             }
 
             response shouldHaveStatus HttpStatusCode.OK
+        }
+    }
+
+    test("returns not found when order does not exist") {
+        withPaymentRoutes {
+            val response = put("/payments/${Uuid.random()}") {
+                contentType(ContentType.Application.Json)
+                setBody(paymentJson)
+            }
+
+            response shouldHaveStatus HttpStatusCode.NotFound
         }
     }
 })

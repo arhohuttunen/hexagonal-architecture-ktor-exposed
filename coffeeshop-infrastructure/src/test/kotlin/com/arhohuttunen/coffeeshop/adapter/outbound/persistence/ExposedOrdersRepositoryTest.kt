@@ -6,8 +6,12 @@ import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
 import com.arhohuttunen.coffeeshop.domain.OrderError
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
+import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
 import com.arhohuttunen.coffeeshop.domain.Size
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.extensions.install
@@ -78,6 +82,38 @@ class ExposedOrdersRepositoryTest : FunSpec({
             ExposedOrdersRepository.deleteById(orderId)
 
             ExposedOrdersRepository.findById(orderId).shouldBeLeft() shouldBe OrderError.NotFound
+        }
+    }
+
+    test("finding a paid order returns a paid order") {
+        transaction {
+            val orderId = havingPersisted(aPaidOrder())
+
+            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Paid>()
+        }
+    }
+
+    test("finding an order in preparation returns an order in preparation") {
+        transaction {
+            val orderId = havingPersisted(anOrderInPreparation())
+
+            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.InPreparation>()
+        }
+    }
+
+    test("finding a ready order returns a ready order") {
+        transaction {
+            val orderId = havingPersisted(aReadyOrder())
+
+            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Ready>()
+        }
+    }
+
+    test("finding a taken order returns a taken order") {
+        transaction {
+            val orderId = havingPersisted(aReadyOrder().take())
+
+            ExposedOrdersRepository.findById(orderId).shouldBeRight().shouldBeInstanceOf<Order.Taken>()
         }
     }
 })
