@@ -3,7 +3,6 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
-import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.anOrder
 import io.kotest.assertions.json.shouldContainJsonKey
 import io.kotest.assertions.json.shouldContainJsonKeyValue
@@ -30,8 +29,8 @@ class PaymentRoutesTest : FunSpec({
     """.trimIndent()
 
     test("returns ok when paying an order") {
-        withPaymentRoutes { orders ->
-            val order = orders.save(anOrder())
+        withPaymentRoutes { given ->
+            val order = given(anOrder())
 
             val response = put("/payments/${order.id}") {
                 contentType(ContentType.Application.Json)
@@ -43,8 +42,8 @@ class PaymentRoutesTest : FunSpec({
     }
 
     test("returns payment details when paying an order") {
-        withPaymentRoutes { orders ->
-            val order = orders.save(anOrder())
+        withPaymentRoutes { given ->
+            val order = given(anOrder())
 
             val response = put("/payments/${order.id}") {
                 contentType(ContentType.Application.Json)
@@ -67,7 +66,7 @@ class PaymentRoutesTest : FunSpec({
     }
 
     test("returns not found when order does not exist") {
-        withPaymentRoutes {
+        withPaymentRoutes { _ ->
             val response = put("/payments/${Uuid.random()}") {
                 contentType(ContentType.Application.Json)
                 setBody(paymentJson)
@@ -78,7 +77,7 @@ class PaymentRoutesTest : FunSpec({
     }
 })
 
-fun withPaymentRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
+fun withPaymentRoutes(test: suspend HttpClient.(TestFixtures) -> Unit) {
     val orders = InMemoryOrders()
     val payments = InMemoryPayments()
     val orderingCoffee = CoffeeShop(orders, payments)
@@ -93,6 +92,6 @@ fun withPaymentRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
         }
         createClient {
             install(ClientContentNegotiation)
-        }.use { client -> test(client, orders) }
+        }.use { client -> test(client, TestFixtures(orders, payments)) }
     }
 }

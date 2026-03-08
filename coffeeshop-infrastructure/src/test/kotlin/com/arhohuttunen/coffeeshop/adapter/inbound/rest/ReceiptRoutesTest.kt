@@ -3,8 +3,6 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
-import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
-import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
 import com.arhohuttunen.coffeeshop.domain.Size
 import com.arhohuttunen.coffeeshop.domain.aLineItem
 import com.arhohuttunen.coffeeshop.domain.anOrder
@@ -27,9 +25,9 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 
 class ReceiptRoutesTest : FunSpec({
     test("returns ok when reading a receipt") {
-        withReceiptRoutes { orders, payments ->
-            val order = orders.save(aReadyOrder())
-            payments.save(aPaymentForOrder(order.id))
+        withReceiptRoutes { given ->
+            val order = given(aReadyOrder())
+            given(aPaymentForOrder(order.id))
 
             val response = get("/receipts/${order.id}")
 
@@ -38,9 +36,9 @@ class ReceiptRoutesTest : FunSpec({
     }
 
     test("returns receipt details when reading a receipt") {
-        withReceiptRoutes { orders, payments ->
-            val order = orders.save(aReadyOrder { items(aLineItem { size = Size.LARGE }) })
-            payments.save(aPaymentForOrder(order.id))
+        withReceiptRoutes { given ->
+            val order = given(aReadyOrder { items(aLineItem { size = Size.LARGE }) })
+            given(aPaymentForOrder(order.id))
 
             val response = get("/receipts/${order.id}")
 
@@ -52,8 +50,8 @@ class ReceiptRoutesTest : FunSpec({
     }
 
     test("returns ok when taking an order") {
-        withReceiptRoutes { orders, _ ->
-            val order = orders.save(aReadyOrder())
+        withReceiptRoutes { given ->
+            val order = given(aReadyOrder())
 
             val response = delete("/receipts/${order.id}")
 
@@ -62,7 +60,7 @@ class ReceiptRoutesTest : FunSpec({
     }
 
     test("returns not found when reading a receipt for a non-existent order") {
-        withReceiptRoutes { _, _ ->
+        withReceiptRoutes { _ ->
             val response = get("/receipts/${Uuid.random()}")
 
             response shouldHaveStatus HttpStatusCode.NotFound
@@ -70,8 +68,8 @@ class ReceiptRoutesTest : FunSpec({
     }
 
     test("returns conflict when taking an order that is not ready") {
-        withReceiptRoutes { orders, _ ->
-            val order = orders.save(anOrder())
+        withReceiptRoutes { given ->
+            val order = given(anOrder())
 
             val response = delete("/receipts/${order.id}")
 
@@ -80,7 +78,7 @@ class ReceiptRoutesTest : FunSpec({
     }
 })
 
-fun withReceiptRoutes(test: suspend HttpClient.(orders: Orders, payments: Payments) -> Unit) {
+fun withReceiptRoutes(test: suspend HttpClient.(TestFixtures) -> Unit) {
     val orders = InMemoryOrders()
     val payments = InMemoryPayments()
     val orderingCoffee = CoffeeShop(orders, payments)
@@ -95,6 +93,6 @@ fun withReceiptRoutes(test: suspend HttpClient.(orders: Orders, payments: Paymen
         }
         createClient {
             install(ClientContentNegotiation)
-        }.use { client -> test(client, orders, payments) }
+        }.use { client -> test(client, TestFixtures(orders, payments)) }
     }
 }

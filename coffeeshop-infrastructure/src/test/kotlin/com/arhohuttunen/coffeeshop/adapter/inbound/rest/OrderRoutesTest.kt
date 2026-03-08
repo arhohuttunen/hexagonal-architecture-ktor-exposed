@@ -4,7 +4,6 @@ import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.CoffeeMachine
 import com.arhohuttunen.coffeeshop.application.CoffeeShop
-import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.anOrder
 import com.arhohuttunen.coffeeshop.domain.anOrderInPreparation
@@ -23,7 +22,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 
 class OrderRoutesTest : FunSpec({
     test("returns created when placing an order") {
-        withOrderRoutes {
+        withOrderRoutes { _ ->
             val response = post("/orders") {
                 contentType(ContentType.Application.Json)
                 setBody(someOrderContents)
@@ -34,7 +33,7 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns order details when placing an order") {
-        withOrderRoutes {
+        withOrderRoutes { _ ->
             val response = post("/orders") {
                 contentType(ContentType.Application.Json)
                 setBody("""
@@ -54,8 +53,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns ok when updating an order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(anOrder())
+        withOrderRoutes { given ->
+            val order = given(anOrder())
 
             val response = put("/orders/${order.id}") {
                 contentType(ContentType.Application.Json)
@@ -67,8 +66,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns no content when cancelling an order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(anOrder())
+        withOrderRoutes { given ->
+            val order = given(anOrder())
 
             val response = delete("/orders/${order.id}")
 
@@ -77,8 +76,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns ok when starting preparation of an order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(aPaidOrder())
+        withOrderRoutes { given ->
+            val order = given(aPaidOrder())
 
             val response = put("/orders/${order.id}/preparation")
 
@@ -87,8 +86,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns ok when finishing preparation of an order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(anOrderInPreparation())
+        withOrderRoutes { given ->
+            val order = given(anOrderInPreparation())
 
             val response = delete("/orders/${order.id}/preparation")
 
@@ -97,8 +96,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns conflict when updating a paid order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(aPaidOrder())
+        withOrderRoutes { given ->
+            val order = given(aPaidOrder())
 
             val response = put("/orders/${order.id}") {
                 contentType(ContentType.Application.Json)
@@ -110,8 +109,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns conflict when cancelling a paid order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(aPaidOrder())
+        withOrderRoutes { given ->
+            val order = given(aPaidOrder())
 
             val response = delete("/orders/${order.id}")
 
@@ -120,8 +119,8 @@ class OrderRoutesTest : FunSpec({
     }
 
     test("returns conflict when preparing an unpaid order") {
-        withOrderRoutes { orders ->
-            val order = orders.save(anOrder())
+        withOrderRoutes { given ->
+            val order = given(anOrder())
 
             val response = put("/orders/${order.id}/preparation")
 
@@ -138,7 +137,7 @@ private val someOrderContents = """
     """.trimIndent()
 
 
-fun withOrderRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
+fun withOrderRoutes(test: suspend HttpClient.(TestFixtures) -> Unit) {
     val orders = InMemoryOrders()
     val payments = InMemoryPayments()
     val orderingCoffee = CoffeeShop(orders, payments)
@@ -154,6 +153,6 @@ fun withOrderRoutes(test: suspend HttpClient.(orders: Orders) -> Unit) {
         }
         createClient {
             install(ClientContentNegotiation)
-        }.use { client -> test(client, orders) }
+        }.use { client -> test(client, TestFixtures(orders, payments)) }
     }
 }
