@@ -9,12 +9,9 @@ object OrderTestFactory {
             )
         )
 
-    fun aPaidOrder() =
-        anOrder().markPaid()
+    fun aPaidOrder() = anOrder().copy(status = Status.PAID)
 
-    fun anOrderInPreparation() =
-        aPaidOrder().markBeingPrepared()
+    fun anOrderInPreparation() = anOrder().copy(status = Status.PREPARING)
 
-    fun aReadyOrder() =
-        anOrderInPreparation().markPrepared()
+    fun aReadyOrder() = anOrder().copy(status = Status.READY)
 }

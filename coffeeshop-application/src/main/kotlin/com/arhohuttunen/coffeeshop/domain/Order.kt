@@ -1,5 +1,8 @@
 package com.arhohuttunen.coffeeshop.domain
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import java.math.BigDecimal
 import kotlin.uuid.Uuid
 
@@ -57,40 +60,23 @@ data class Order(
 
     fun cost() = items.map(LineItem::cost).reduce(BigDecimal::add)
 
-    fun update(location: Location, items: List<LineItem>): Order {
-        if (status == Status.PAID) {
-            throw IllegalStateException("Order is already paid")
-        }
-        return copy(location = location, items = items)
-    }
+    fun update(location: Location, items: List<LineItem>): Either<OrderError, Order> =
+        if (status == Status.PAID) OrderError.AlreadyPaid.left()
+        else copy(location = location, items = items).right()
 
-    fun markPaid(): Order {
-        if (status != Status.PAYMENT_EXPECTED) {
-            throw IllegalStateException("Order is already paid")
-        }
-        return copy(status = Status.PAID)
-    }
+    fun markPaid(): Either<OrderError, Order> =
+        if (status != Status.PAYMENT_EXPECTED) OrderError.AlreadyPaid.left()
+        else copy(status = Status.PAID).right()
 
-    fun markBeingPrepared(): Order {
-        if (status != Status.PAID) {
-            throw IllegalStateException("Order is not paid")
-        }
-        return copy(status = Status.PREPARING)
-    }
+    fun markBeingPrepared(): Either<OrderError, Order> =
+        if (status != Status.PAID) OrderError.NotPaid.left()
+        else copy(status = Status.PREPARING).right()
 
-    fun markPrepared(): Order {
-        if (status != Status.PREPARING) {
-            throw IllegalStateException("Order is not being prepared")
-        }
-        return copy(status = Status.READY)
-    }
+    fun markPrepared(): Either<OrderError, Order> =
+        if (status != Status.PREPARING) OrderError.NotBeingPrepared.left()
+        else copy(status = Status.READY).right()
 
-    fun markTaken(): Order {
-        if (status != Status.READY) {
-            throw IllegalStateException("Order is not ready")
-        }
-        return copy(status = Status.TAKEN)
-    }
+    fun markTaken(): Either<OrderError, Order> =
+        if (status != Status.READY) OrderError.NotReady.left()
+        else copy(status = Status.TAKEN).right()
 }
-
-

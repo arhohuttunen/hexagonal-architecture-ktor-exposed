@@ -5,7 +5,6 @@ import com.arhohuttunen.coffeeshop.domain.CreditCard
 import com.arhohuttunen.coffeeshop.domain.Payment
 import io.ktor.http.*
 import io.ktor.server.request.receive
-import io.ktor.server.request.uri
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.YearMonth
@@ -48,7 +47,10 @@ data class PaymentResponse(
 fun Route.paymentRoutes(orderingCoffee: OrderingCoffee) {
     put("/payments/{id}") {
         val request = call.receive<PaymentRequest>()
-        val payment = orderingCoffee.payOrder(Uuid.parse(call.parameters["id"]!!), request.creditCard())
-        call.respond(HttpStatusCode.OK, PaymentResponse.fromDomain(payment))
+        orderingCoffee.payOrder(Uuid.parse(call.parameters["id"]!!), request.creditCard())
+            .fold(
+                { call.respondError(it) },
+                { call.respond(HttpStatusCode.OK, PaymentResponse.fromDomain(it)) }
+            )
     }
 }

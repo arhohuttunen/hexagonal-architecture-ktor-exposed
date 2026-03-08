@@ -1,8 +1,11 @@
 package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 
-import com.arhohuttunen.coffeeshop.application.ports.outbound.PaymentNotFound
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
 import com.arhohuttunen.coffeeshop.domain.CreditCard
+import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.Payment
 import kotlinx.datetime.YearMonth
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -23,12 +26,12 @@ object ExposedPaymentsRepository : Payments {
         return payment
     }
 
-    override fun findByOrderId(orderId: Uuid): Payment {
+    override fun findByOrderId(orderId: Uuid): Either<OrderError, Payment> {
         val paymentRow = PaymentsTable.selectAll()
             .where { PaymentsTable.orderId eq orderId }
-            .singleOrNull() ?: throw PaymentNotFound()
+            .singleOrNull() ?: return OrderError.PaymentNotFound.left()
 
-        return paymentRow.toPayment()
+        return paymentRow.toPayment().right()
     }
 }
 

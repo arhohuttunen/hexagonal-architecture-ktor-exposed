@@ -1,14 +1,15 @@
 package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 
-import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
 import com.arhohuttunen.coffeeshop.domain.Order
+import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.Size
-import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerProjectExtension
@@ -37,9 +38,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     test("creating an order returns the persisted order") {
         val order = Order(
             location = Location.TAKE_AWAY,
-            items = listOf(
-                LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1)
-            )
+            items = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.SMALL, 1))
         )
 
         val persistedOrder = ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
@@ -52,22 +51,19 @@ class ExposedOrdersRepositoryTest : FunSpec({
         val orderId = havingPersisted(
             Order(
                 location = Location.IN_STORE,
-                items = listOf(
-                    LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1)
-                )
+                items = listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
             )
         )
 
-        val order = ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
+        val order = ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }.shouldBeRight()
 
         order.location shouldBe Location.IN_STORE
         order.items shouldContainExactly listOf(LineItem(Drink.ESPRESSO, Milk.SKIMMED, Size.LARGE, 1))
     }
 
-    test("finding a non-existing order throws an exception") {
-        shouldThrow<OrderNotFound> {
-            ExposedTransactionScope.execute { ExposedOrdersRepository.findById(Uuid.random()) }
-        }
+    test("finding a non-existing order returns NotFound") {
+        ExposedTransactionScope.execute { ExposedOrdersRepository.findById(Uuid.random()) }
+            .shouldBeLeft() shouldBe OrderError.NotFound
     }
 
     test("deleting an order removes it") {
@@ -75,9 +71,8 @@ class ExposedOrdersRepositoryTest : FunSpec({
 
         ExposedTransactionScope.execute { ExposedOrdersRepository.deleteById(orderId) }
 
-        shouldThrow<OrderNotFound> {
-            ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
-        }
+        ExposedTransactionScope.execute { ExposedOrdersRepository.findById(orderId) }
+            .shouldBeLeft() shouldBe OrderError.NotFound
     }
 })
 

@@ -1,9 +1,12 @@
 package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 
-import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Order
+import com.arhohuttunen.coffeeshop.domain.OrderError
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -32,16 +35,16 @@ object ExposedOrdersRepository : Orders {
         return order
     }
 
-    override fun findById(orderId: Uuid): Order {
+    override fun findById(orderId: Uuid): Either<OrderError, Order> {
         val orderRow = OrdersTable.selectAll()
             .where { OrdersTable.id eq orderId }
-            .singleOrNull() ?: throw OrderNotFound()
+            .singleOrNull() ?: return OrderError.NotFound.left()
 
         val items = OrderItemsTable.selectAll()
             .where { OrderItemsTable.orderId eq orderId }
             .map { it.toLineItem() }
 
-        return orderRow.toOrder(items)
+        return orderRow.toOrder(items).right()
     }
 
     override fun deleteById(orderId: Uuid) {

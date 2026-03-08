@@ -3,6 +3,7 @@ package com.arhohuttunen.coffeeshop.adapter.outbound.persistence
 import com.arhohuttunen.coffeeshop.domain.CreditCardTestFactory.aCreditCard
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
 import com.arhohuttunen.coffeeshop.domain.Payment
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerProjectExtension
@@ -47,7 +48,7 @@ class ExposedPaymentsRepositoryTest : FunSpec({
         havingPersisted(order)
         havingPersisted(Payment(order.id, creditCard, now))
 
-        val payment = ExposedTransactionScope.execute { ExposedPaymentsRepository.findByOrderId(order.id) }
+        val payment = ExposedTransactionScope.execute { ExposedPaymentsRepository.findByOrderId(order.id) }.shouldBeRight()
 
         payment.creditCard shouldBe creditCard
         payment.paidAt shouldBe now

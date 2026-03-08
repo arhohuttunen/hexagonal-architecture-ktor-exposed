@@ -4,7 +4,6 @@ import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryOrders
 import com.arhohuttunen.coffeeshop.adapters.outbound.InMemoryPayments
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.inbound.PreparingCoffee
-import com.arhohuttunen.coffeeshop.application.ports.outbound.OrderNotFound
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
 import com.arhohuttunen.coffeeshop.domain.CreditCardTestFactory.aCreditCard
@@ -12,6 +11,7 @@ import com.arhohuttunen.coffeeshop.domain.Drink
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Milk
+import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aPaidOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.aReadyOrder
 import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrder
@@ -19,10 +19,11 @@ import com.arhohuttunen.coffeeshop.domain.OrderTestFactory.anOrderInPreparation
 import com.arhohuttunen.coffeeshop.domain.PaymentTestFactory.aPaymentForOrder
 import com.arhohuttunen.coffeeshop.domain.Size
 import com.arhohuttunen.coffeeshop.domain.Status
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 
 class AcceptanceTests : FunSpec({
     val orders: Orders = InMemoryOrders()
@@ -45,53 +46,46 @@ class AcceptanceTests : FunSpec({
         val twoItems = listOf(LineItem(Drink.LATTE, Milk.WHOLE, Size.LARGE, 2))
 
         val order = customer.placeOrder(location = Location.TAKE_AWAY, items = oneItem)
-        val updatedOrder = customer.updateOrder(order.id, Location.IN_STORE, twoItems)
 
-        updatedOrder.items shouldContainExactly twoItems
+        customer.updateOrder(order.id, Location.IN_STORE, twoItems).shouldBeRight().items shouldContainExactly twoItems
     }
 
     test("order cannot be updated if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        shouldThrow<IllegalStateException> {
-            customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList())
-        }
+        customer.updateOrder(existingOrder.id, Location.TAKE_AWAY, emptyList()).shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can cancel the order before paying") {
         val existingOrder = orders.save(anOrder())
 
-        customer.cancelOrder(existingOrder.id)
+        customer.cancelOrder(existingOrder.id).shouldBeRight()
 
-        shouldThrow<OrderNotFound> {
-            orders.findById(existingOrder.id)
-        }
+        orders.findById(existingOrder.id).shouldBeLeft() shouldBe OrderError.NotFound
     }
 
     test("an order cannot be cancelled if it has been paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        shouldThrow<IllegalStateException> {
-            customer.cancelOrder(existingOrder.id)
-        }
+        customer.cancelOrder(existingOrder.id).shouldBeLeft() shouldBe OrderError.AlreadyPaid
     }
 
     test("customer can pay the order") {
         val order = orders.save(anOrder())
         val creditCard = aCreditCard()
 
-        val payment = customer.payOrder(order.id, creditCard)
+        val payment = customer.payOrder(order.id, creditCard).shouldBeRight()
 
         payment.orderId shouldBe order.id
         payment.creditCard shouldBe creditCard
-        orders.findById(order.id).status shouldBe Status.PAID
+        orders.findById(order.id).shouldBeRight().status shouldBe Status.PAID
     }
 
     test("customer can get a receipt when the order is paid") {
         val existingOrder = orders.save(aPaidOrder())
         val existingPayment = payments.save(aPaymentForOrder(existingOrder.id))
 
-        val receipt = customer.readReceipt(existingOrder.id)
+        val receipt = customer.readReceipt(existingOrder.id).shouldBeRight()
 
         receipt.amount shouldBe existingOrder.cost()
         receipt.paidAt shouldBe existingPayment.paidAt
@@ -100,24 +94,18 @@ class AcceptanceTests : FunSpec({
     test("barista can start preparing the order when it is paid") {
         val existingOrder = orders.save(aPaidOrder())
 
-        val orderInPreparation = barista.startPreparingOrder(existingOrder.id)
-
-        orderInPreparation.status shouldBe Status.PREPARING
+        barista.startPreparingOrder(existingOrder.id).shouldBeRight().status shouldBe Status.PREPARING
     }
 
     test("barista can mark the order ready when they have finished preparing it") {
         val existingOrder = orders.save(anOrderInPreparation())
 
-        val preparedOrder = barista.finishPreparingOrder(existingOrder.id)
-
-        preparedOrder.status shouldBe Status.READY
+        barista.finishPreparingOrder(existingOrder.id).shouldBeRight().status shouldBe Status.READY
     }
 
     test("customer can take the order when it is ready") {
         val existingOrder = orders.save(aReadyOrder())
 
-        val takenOrder = customer.takeOrder(existingOrder.id)
-
-        takenOrder.status shouldBe Status.TAKEN
+        customer.takeOrder(existingOrder.id).shouldBeRight().status shouldBe Status.TAKEN
     }
 })

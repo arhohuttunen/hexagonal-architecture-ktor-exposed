@@ -1,5 +1,8 @@
 package com.arhohuttunen.coffeeshop.application
 
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Orders
 import com.arhohuttunen.coffeeshop.application.ports.outbound.Payments
@@ -8,6 +11,7 @@ import com.arhohuttunen.coffeeshop.domain.CreditCard
 import com.arhohuttunen.coffeeshop.domain.LineItem
 import com.arhohuttunen.coffeeshop.domain.Location
 import com.arhohuttunen.coffeeshop.domain.Order
+import com.arhohuttunen.coffeeshop.domain.OrderError
 import com.arhohuttunen.coffeeshop.domain.Payment
 import com.arhohuttunen.coffeeshop.domain.Receipt
 import kotlin.time.Clock
@@ -19,40 +23,49 @@ class CoffeeShop(
     private val transactionScope: TransactionScope = TransactionScope()
 ) : OrderingCoffee {
     override fun placeOrder(location: Location, items: List<LineItem>): Order =
+        transactionScope.execute { orders.save(Order(location = location, items = items)) }
+
+    override fun updateOrder(orderId: Uuid, location: Location, items: List<LineItem>): Either<OrderError, Order> =
         transactionScope.execute {
-            orders.save(Order(location = location, items = items))
+            either {
+                val order = orders.findById(orderId).bind()
+                order.update(location, items).bind().also { orders.save(it) }
+            }
         }
 
-    override fun updateOrder(orderId: Uuid, location: Location, items: List<LineItem>): Order =
+    override fun cancelOrder(orderId: Uuid): Either<OrderError, Unit> =
         transactionScope.execute {
-            val existingOrder = orders.findById(orderId)
-            orders.save(existingOrder.update(location, items))
+            either {
+                val order = orders.findById(orderId).bind()
+                ensure(order.canBeCancelled()) { OrderError.AlreadyPaid }
+                orders.deleteById(orderId)
+            }
         }
 
-    override fun cancelOrder(orderId: Uuid) =
+    override fun payOrder(orderId: Uuid, creditCard: CreditCard): Either<OrderError, Payment> =
         transactionScope.execute {
-            val order = orders.findById(orderId)
-            if (!order.canBeCancelled()) throw IllegalStateException("Order is already paid")
-            orders.deleteById(orderId)
+            either {
+                val order = orders.findById(orderId).bind()
+                val paidOrder = order.markPaid().bind()
+                orders.save(paidOrder)
+                payments.save(Payment(orderId, creditCard, Clock.System.now()))
+            }
         }
 
-    override fun payOrder(orderId: Uuid, creditCard: CreditCard): Payment =
+    override fun readReceipt(orderId: Uuid): Either<OrderError, Receipt> =
         transactionScope.execute {
-            val order = orders.findById(orderId)
-            orders.save(order.markPaid())
-            payments.save(Payment(orderId, creditCard, Clock.System.now()))
+            either {
+                val order = orders.findById(orderId).bind()
+                val payment = payments.findByOrderId(orderId).bind()
+                Receipt(order.cost(), payment.paidAt)
+            }
         }
 
-    override fun readReceipt(orderId: Uuid): Receipt =
+    override fun takeOrder(orderId: Uuid): Either<OrderError, Order> =
         transactionScope.execute {
-            val order = orders.findById(orderId)
-            val payment = payments.findByOrderId(orderId)
-            Receipt(order.cost(), payment.paidAt)
-        }
-
-    override fun takeOrder(orderId: Uuid): Order =
-        transactionScope.execute {
-            val order = orders.findById(orderId)
-            orders.save(order.markTaken())
+            either {
+                val order = orders.findById(orderId).bind()
+                order.markTaken().bind().also { orders.save(it) }
+            }
         }
 }

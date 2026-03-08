@@ -83,19 +83,31 @@ fun Route.orderRoutes(orderingCoffee: OrderingCoffee, preparingCoffee: Preparing
     }
     put("/orders/{id}") {
         val request = call.receive<OrderRequest>()
-        val order = orderingCoffee.updateOrder(Uuid.parse(call.parameters["id"]!!), request.location, request.domainItems())
-        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
+        orderingCoffee.updateOrder(Uuid.parse(call.parameters["id"]!!), request.location, request.domainItems())
+            .fold(
+                { call.respondError(it) },
+                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+            )
     }
     delete("/orders/{id}") {
         orderingCoffee.cancelOrder(Uuid.parse(call.parameters["id"]!!))
-        call.respond(HttpStatusCode.NoContent)
+            .fold(
+                { call.respondError(it) },
+                { call.respond(HttpStatusCode.NoContent) }
+            )
     }
     put("/orders/{id}/preparation") {
-        val order = preparingCoffee.startPreparingOrder(Uuid.parse(call.parameters["id"]!!))
-        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
+        preparingCoffee.startPreparingOrder(Uuid.parse(call.parameters["id"]!!))
+            .fold(
+                { call.respondError(it) },
+                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+            )
     }
     delete("/orders/{id}/preparation") {
-        val order = preparingCoffee.finishPreparingOrder(Uuid.parse(call.parameters["id"]!!))
-        call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(order))
+        preparingCoffee.finishPreparingOrder(Uuid.parse(call.parameters["id"]!!))
+            .fold(
+                { call.respondError(it) },
+                { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }
+            )
     }
 }

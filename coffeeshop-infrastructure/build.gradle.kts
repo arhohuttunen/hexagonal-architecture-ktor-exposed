@@ -12,12 +12,14 @@ application {
 
 dependencies {
     implementation(project(":coffeeshop-application"))
+    implementation(libs.arrowCore)
     implementation(libs.bundles.exposed)
     implementation(libs.bundles.kotlinxEcosystem)
     implementation(libs.bundles.ktorServer)
     implementation(libs.logback)
     implementation(libs.postgresql)
     testImplementation(testFixtures(project(":coffeeshop-application")))
+    testImplementation(libs.kotestAssertionsArrow)
     testImplementation(libs.kotestAssertionsKtor)
     testImplementation(libs.kotestExtensionsTestcontainers)
     testImplementation(libs.kotestRunnerJUnit5)

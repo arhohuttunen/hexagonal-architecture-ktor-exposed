@@ -1,4 +1,5 @@
 [versions]
+arrow = "2.0.1"
 exposed = "1.1.1"
 kotest = "6.1.4"
 kotlin = "2.3.0"
@@ -11,10 +12,12 @@ postgresql = "42.7.10"
 testcontainers = "1.21.4"
 
 [libraries]
+arrowCore = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 exposed = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposedJdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposedKotlinDatetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 kotestRunnerJUnit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotestAssertionsArrow = { module = "io.kotest:kotest-assertions-arrow", version.ref = "kotest" }
 kotestAssertionsKtor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest" }
 kotestExtensionsTestcontainers = { module = "io.kotest:kotest-extensions-testcontainers-jvm", version.ref = "kotest" }
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
