@@ -3,6 +3,10 @@ package com.arhohuttunen.coffeeshop.domain
 class OrderBuilder {
     var location: Location = Location.TAKE_AWAY
     var items: List<LineItem> = listOf(aLineItem())
+
+    fun items(vararg items: LineItem) {
+        this.items = items.toList()
+    }
 }
 
 fun anOrder(configure: OrderBuilder.() -> Unit = {}): Order.Placed =
