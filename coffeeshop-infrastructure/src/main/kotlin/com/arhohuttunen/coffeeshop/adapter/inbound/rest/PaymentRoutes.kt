@@ -4,13 +4,23 @@ import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.domain.CreditCard
 import com.arhohuttunen.coffeeshop.domain.Payment
 import io.ktor.http.*
+import io.ktor.resources.Resource
 import io.ktor.server.request.receive
+import io.ktor.server.resources.put
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.YearMonth
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+
+@Serializable
+@Resource("/payments")
+class Payments {
+    @Serializable
+    @Resource("{id}")
+    data class ById(val parent: Payments = Payments(), val id: Uuid)
+}
 
 @Serializable
 data class PaymentRequest(
@@ -45,9 +55,9 @@ data class PaymentResponse(
 }
 
 fun Route.paymentRoutes(orderingCoffee: OrderingCoffee) {
-    put("/payments/{id}") {
+    put<Payments.ById> { resource ->
         val request = call.receive<PaymentRequest>()
-        orderingCoffee.payOrder(Uuid.parse(call.parameters["id"]!!), request.creditCard())
+        orderingCoffee.payOrder(resource.id, request.creditCard())
             .fold(
                 { call.respondError(it) },
                 { call.respond(HttpStatusCode.OK, PaymentResponse.fromDomain(it)) }

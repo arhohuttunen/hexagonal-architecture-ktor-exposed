@@ -3,14 +3,23 @@ package com.arhohuttunen.coffeeshop.adapter.inbound.rest
 import com.arhohuttunen.coffeeshop.application.ports.inbound.OrderingCoffee
 import com.arhohuttunen.coffeeshop.domain.Receipt
 import io.ktor.http.HttpStatusCode
+import io.ktor.resources.Resource
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+
+@Serializable
+@Resource("/receipts")
+class Receipts {
+    @Serializable
+    @Resource("{id}")
+    data class ById(val parent: Receipts = Receipts(), val id: Uuid)
+}
 
 @Serializable
 data class ReceiptResponse(
@@ -28,15 +37,15 @@ data class ReceiptResponse(
 }
 
 fun Route.receiptRoutes(orderingCoffee: OrderingCoffee) {
-    get("/receipts/{id}") {
-        orderingCoffee.readReceipt(Uuid.parse(call.parameters["id"]!!))
+    get<Receipts.ById> { resource ->
+        orderingCoffee.readReceipt(resource.id)
             .fold(
                 { call.respondError(it) },
                 { call.respond(HttpStatusCode.OK, ReceiptResponse.fromDomain(it)) }
             )
     }
-    delete("/receipts/{id}") {
-        orderingCoffee.takeOrder(Uuid.parse(call.parameters["id"]!!))
+    delete<Receipts.ById> { resource ->
+        orderingCoffee.takeOrder(resource.id)
             .fold(
                 { call.respondError(it) },
                 { call.respond(HttpStatusCode.OK, OrderResponse.fromDomain(it)) }

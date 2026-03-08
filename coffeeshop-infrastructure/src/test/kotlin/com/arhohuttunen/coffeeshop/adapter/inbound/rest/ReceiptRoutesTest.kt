@@ -14,6 +14,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.resources.Resources
 import io.ktor.server.testing.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
@@ -49,6 +50,7 @@ fun withReceiptRoutes(test: suspend HttpClient.(orders: Orders, payments: Paymen
         install(ContentNegotiation) {
             json()
         }
+        install(Resources)
         routing {
             receiptRoutes(orderingCoffee)
         }

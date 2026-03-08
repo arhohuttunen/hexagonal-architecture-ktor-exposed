@@ -31,6 +31,7 @@ ktorServerConfigYaml = { module = "io.ktor:ktor-server-config-yaml", version.ref
 ktorServerContentNegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktorServerCore = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktorServerNetty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktorServerResources = { module = "io.ktor:ktor-server-resources", version.ref = "ktor" }
 ktorServerStatusPages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktorServerTestHost = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
@@ -40,7 +41,7 @@ testcontainersPostgresql = { module = "org.testcontainers:postgresql", version.r
 [bundles]
 exposed = ["exposed", "exposedJdbc", "exposedKotlinDatetime"]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
-ktorServer = ["ktorSerializationKotlinxJson", "ktorServerConfigYaml", "ktorServerContentNegotiation", "ktorServerCore", "ktorServerNetty", "ktorServerStatusPages"]
+ktorServer = ["ktorSerializationKotlinxJson", "ktorServerConfigYaml", "ktorServerContentNegotiation", "ktorServerCore", "ktorServerNetty", "ktorServerResources", "ktorServerStatusPages"]
 
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
