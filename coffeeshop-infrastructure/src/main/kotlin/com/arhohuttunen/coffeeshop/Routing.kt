@@ -23,13 +23,13 @@ fun Application.configureRouting(dependencies: Dependencies) {
         receiptRoutes(dependencies.orderingCoffee)
     }
     install(StatusPages) {
-        exception<OrderNotFound> { call, e ->
+        exception<OrderNotFound> { call, _ ->
             call.respond(HttpStatusCode.NotFound)
         }
-        exception<PaymentNotFound> { call, e ->
+        exception<PaymentNotFound> { call, _ ->
             call.respond(HttpStatusCode.NotFound)
         }
-        exception<IllegalStateException> { call, e ->
+        exception<IllegalStateException> { call, _ ->
             call.respond(HttpStatusCode.Conflict)
         }
     }
