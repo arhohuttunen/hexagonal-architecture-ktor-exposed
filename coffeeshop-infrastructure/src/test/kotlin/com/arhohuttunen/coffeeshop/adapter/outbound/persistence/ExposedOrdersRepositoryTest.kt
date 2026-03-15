@@ -49,7 +49,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 
     test("finding a placed order returns its details") {
-        val orderId = havingPersisted(
+        val orderId = existing(
             Order(
                 location = Location.IN_STORE,
                 items = listOf(
@@ -71,7 +71,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 
     test("deleting an order removes it") {
-        val orderId = havingPersisted(anOrder())
+        val orderId = existing(anOrder())
 
         ExposedTransactionScope.execute { ExposedOrdersRepository.deleteById(orderId) }
 
@@ -81,7 +81,7 @@ class ExposedOrdersRepositoryTest : FunSpec({
     }
 })
 
-fun havingPersisted(order: Order): Uuid {
+fun existing(order: Order): Uuid {
     ExposedTransactionScope.execute { ExposedOrdersRepository.save(order) }
     return order.id
 }
