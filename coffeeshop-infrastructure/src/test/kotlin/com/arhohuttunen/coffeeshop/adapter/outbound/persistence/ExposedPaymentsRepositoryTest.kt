@@ -11,7 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.testcontainers.containers.PostgreSQLContainer
-import kotlin.time.Clock
+import kotlin.time.Instant
 
 class ExposedPaymentsRepositoryTest : FunSpec({
     val postgres = install(TestContainerProjectExtension(PostgreSQLContainer<Nothing>("postgres")))
@@ -30,27 +30,25 @@ class ExposedPaymentsRepositoryTest : FunSpec({
     test("creating a payment returns the persisted payment") {
         val order = anOrder()
         val creditCard = aCreditCard()
-        val now = Clock.System.now()
-        val payment = Payment(order.id, creditCard, now)
+        val payment = Payment(order.id, creditCard, Instant.parse("2026-03-21T08:00:00Z"))
         existing(order)
 
         val persistedPayment = ExposedTransactionScope.execute { ExposedPaymentsRepository.save(payment) }
 
         persistedPayment.creditCard shouldBe creditCard
-        persistedPayment.paidAt shouldBe now
+        persistedPayment.paidAt shouldBe Instant.parse("2026-03-21T08:00:00Z")
     }
 
     test("finding previously made payment returns its details") {
         val order = anOrder()
         val creditCard = aCreditCard()
-        val now = Clock.System.now()
         existing(order)
-        existing(Payment(order.id, creditCard, now))
+        existing(Payment(order.id, creditCard, Instant.parse("2026-03-20T10:00:00Z")))
 
         val payment = ExposedTransactionScope.execute { ExposedPaymentsRepository.findByOrderId(order.id) }
 
         payment.creditCard shouldBe creditCard
-        payment.paidAt shouldBe now
+        payment.paidAt shouldBe Instant.parse("2026-03-20T10:00:00Z")
     }
 })
 
