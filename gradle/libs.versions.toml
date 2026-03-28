@@ -1,7 +1,7 @@
 [versions]
 arrow = "2.2.2.1"
 exposed = "1.1.1"
-kotest = "6.1.7"
+kotest = "6.1.9"
 kotlin = "2.3.20"
 kotlinxDatetime = "0.7.1"
 kotlinxSerializationJSON = "1.10.0"
